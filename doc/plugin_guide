@@ -1,0 +1,84 @@
+How to write a OCsetup plugin runing on X.
+    1:
+        * A Plugin file must be written in python, with filename end with .py
+        * A Plugin class must be a subclass of PluginBase from ovirtfunctions.py
+        * A Plugin file must has a 'main' function called 'get_plugin, the ocsetup
+          will call PluginFileName.get_plugin to activate this Plugin.
+    2:
+        * function get_plugin must return a list, which represent a page to be shown
+          in the OCsetup, see detail below:
+          [plugin_name,  plugin_label, plugin_page]
+                `plugin_name` is the name of the plugin, it should be unique.
+                `plugin_label` is a text shown in the left side of the screen.
+                `plugin_page` is the main part of the plugin, it covers almost everything.
+    3:
+        * plugin_page is a list, contating a list of `tuples of widgets`. which represents every row of
+          the plugin. that's how a page gets generated.
+          it looks like this:
+                [
+                    'pluginFoo', 'Foo',
+                    [
+                     (title_widget,),
+                     (content_foo, content_foo_edit_field),
+                     (pluginFoo_buttons,),
+                    ]
+                ]
+          also, you can change the layout of the page by 'move' the position of widget.
+                like the example above, if you want to move content_foo_edit_field to the buttom of content_foo.
+                [
+                    'pluginFoo', 'Foo',
+                    [
+                     (title_widget,),
+                     (content_foo,),
+                     (content_foo_edit_field,), # i am here right now:)
+                     (pluginFoo_buttons,),
+                    ]
+                ]
+               make the page like this:
+
+        * plugin widgets are like gtk widgets, it's the basic unit of a page, there's two ways to create a
+          plugin widget.
+
+            You have to get a widget config `first` by WidgetBase from ocsetup_ui. which you will actually get
+            a dict, containing the attributes of the widget you want to create, normally, you don't have to
+            modify WidgetBase after you get the WidgetBase object.
+
+                    WidgetBase(name, type, label="", value="", title=False,
+                                params=None,
+                                conf_getter=None, conf_setter=None, conf_show=None, conf_curv=None,
+                                conf_path=None, vhelp=0)
+                    parameters:
+                        name:        a name that widget's parent can access to the widget by parent.widiget_name
+                        type:        the type of widget, it can be a basic gtk type like 'Label', 'Button',
+                                     or a `custom Class` you write.
+                        label:       for those widgets needs to show a text on the screen, it's useful for gtk.Label
+                                     gtk.Button, etc.
+                        value:       normally, it has the same effect of label, plus, it can be a default value for widgets
+                                     like gtk.Entry.
+                        title:       bool.if that widget is a title, it will get a auto-alignment for it.
+                        params:      Only use this if you want to create a custom widget by custom Class. Use this parameter
+                                     to pass datas to your custon widget class. normally, it should be a dict.
+                        conf_getter: it should be a function/method/lambda to fetch the values to be shown, if you need to get
+                                     the value through a configure file, you also need to set `conf_path` to the path of configure file.
+                        conf_curv:   a lambda/function to fetch the `current` shown in the widget, usually, conf_setter needs to call conf_curv
+                                     to get the value, then, apply(write) to conf file.
+                        conf_setter: write the current value to conf file.
+                        conf_show:   it will set the value for those widgets that need to be updated/refresh.
+                                     if you widgets is gtk basic widgets like Button, Label, Entry, conf_setter is already there.
+                                     but if you widget is `custom widget`, you have to write your own conf_setter in your Widget class
+                                     with method/lambda name called `set_conf`, e.g: CustomWidget.set_conf
+                                     normally, conf_setter is useless in WidgetBase, as long as you implement in your class.
+                        vhelp:       a int value to control alignment. it use with EMPTY_LINE.
+                        some e.g:
+                               WidgetBase('hello', 'Label', 'Hello sunus!')
+                                    will gives you a simple gtk.Label('Hello sunus')
+
+                               WidgetBase('logical_network', DetailedList, '',
+                                    params={'labels':
+                                            [_('Logical Network'), _('Device'), _('MAC Address')]},
+                                            get_conf=datautil.read_logical_netwrok)
+                                    this gives your a custom widgets, created by class DetailedList wit params. the values of widgets
+                                    can be refresh by function datautil.read_logical_netwrok.
+
+                                WidgetBase('EMPTY_LINE', 'Label', vhelp=100)
+                                    will give you a empty line, with height of 100px. it can help to do the alignment work.
