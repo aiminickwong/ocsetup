@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # encoding=utf-8
-#
+
+
 # Copyright (C) 2012 Sunus Lee, CT
 #
 # This program is free software; you can redistribute it and/or modify
@@ -18,9 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 #
 # Refer to the README and COPYING files for full details of the license
-#
-#!/usr/bin/env python
-# encoding=utf-8
+
 
 from subprocess import Popen, PIPE
 

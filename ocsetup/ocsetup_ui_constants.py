@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # encoding=utf-8
-#
 # Copyright (C) 2012 Sunus Lee, CT
 #
 # This program is free software; you can redistribute it and/or modify
@@ -19,6 +18,7 @@
 #
 # Refer to the README and COPYING files for full details of the license
 #
+
 
 # Width and Height, use default(-1) for those unlisted here.
 OC_DEFAULT = -1

@@ -1,4 +1,6 @@
 #!/usr/bin/python
+
+
 # license.py - Copyright (C) 2012 CloudTimes, Inc.
 # Plugins for showing information about license in ovirt-node.
 # Written by Jarod.W <wangli@cloud-times.com>

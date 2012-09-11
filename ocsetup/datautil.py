@@ -19,8 +19,6 @@
 #
 # Refer to the README and COPYING files for full details of the license
 #
-#!/usr/bin/env python
-# encoding=utf-8
 
 import os
 from ovirtnode.ovirtfunctions import  network_up, aug, logical_to_physical_networks,\

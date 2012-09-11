@@ -19,8 +19,7 @@
 #
 # Refer to the README and COPYING files for full details of the license
 #
-#!/usr/bin/env python
-# encoding=utf-8
+
 
 import gtk
 import sys
