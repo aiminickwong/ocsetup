@@ -19,19 +19,17 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA  02110-1301, USA.  A copy of the GNU General Public License is
 # also available at http://www.gnu.org/copyleft/gpl.html.
-
 import sys
 import traceback
-import ConfigParser
 
-from snack import *
+from ovirtnode.ovirtfunctions import log
 
-sys.path.append('/usr/share/vdsm-reg')
-from ovirtnode.ovirtfunctions import *
-from ocsetup.ocsetup_ui import WidgetBase, EMPTY_LINE
+sys.path.append("/usr/share/vdsm-reg")
 from license_utils import hasRegistered, getVersionInfo, getLicenseConfig, hasStarted, \
                           setLicenseConfig, computeDeprecatedDays, DEFAULTREMAININGDAYS
 from ocsetup.wrapper_ovirtfunctions import PluginBase
+from ocsetup.ocsetup_ui import WidgetBase, EMPTY_LINE
+
 class Plugin(PluginBase):
     """
     Plugin for license information of IVNH.
@@ -43,33 +41,32 @@ class Plugin(PluginBase):
     def form(self):
         log("enter license form function....")
         remaindays = 0
-        '''
         try:
             hasregister = hasRegistered()
             hasstart = hasStarted()
 
-            headermessage = ('label', 'Basic Information', 'Basic Information')
-            #heading = Label(headermessage)
+            headermessage = WidgetBase("Basic_Information", "Label", "Basic Information",
+                    extras={'title': True})
+
+
             #show hypervisor version information
             version = getVersionInfo()
-            versionlabel = ('label', "  Version: " + version,
+            versionlabel =  WidgetBase("Version", "Label",
                     "Version:" + version)
 
+            #show register information
+            subtopiclabel = WidgetBase("SUB_TOPIC_LABEL", "Label",
+                    "Basic Register Information: ")
 
-            #show basic register information
-            subtopiclabel = ('label', 'Basic Register Information: ',
-                             'Basic Register Information')
-            licenseconfig = getLicenseConfig("vars", "mac", "F0:DE:F1:00:00:00")
-            maclabel = ('label',
-                "Mac: "+ licenseconfig,
-                "Mac: "+ licenseconfig)
+            macinfo = getLicenseConfig("vars", "mac", "F0:DE:F1:00:00:00")
+            maclabel = WidgetBase("MAC_LABEL", "Label", "  Mac: "+macinfo)
 
-            lc = getLicenseConfig("vars", "systemuuid",
+            sysuuidinfo = getLicenseConfig("vars", "systemuuid",
                     "00000000-0000-0000-0000-000000000000")
-            systemuuidlabel = ('label', "  SystemUUID: " + lc,
-                                " SystemUUID:  " + lc)
+            sysuuidlabel = WidgetBase("SYSTEMUUID_LABEL", "Label", "  SystemUUID: "+sysuuidinfo)
+
             if hasstart and hasregister:
-                taillabel = "Note: Your hypervisor has been registered successfully.\n \
+                taillabel_text = "Note: Your hypervisor has been registered successfully.\n \
                 Any question, please contact : service@cloud-times.com!"
             else:
                 days, issuccess = computeDeprecatedDays()
@@ -82,29 +79,18 @@ class Plugin(PluginBase):
                     log("Failed to invoke computeDeprecatedDays. ")
                 warninginfo = "You have " + str(remaindays) + " to use before registering."
                 taillabel_text = "Note: Your hypervisor hasn't been registered.Please use\nthe information above to register.\n"+warninginfo
-            #elements.setField(Textbox(56,4, taillabel), 0, 7, anchorLeft = 1)
-            taillabel = ('label', taillabel_text, taillabel_text)
+
+            taillabel = WidgetBase("TAIL_LABEL", "Label", taillabel_text)
         except:
             log("Here some error happened.format ext:  %s " % traceback.format_exc())
-        #return [Label(""), elements]
-        '''
 
-        headermessage = WidgetBase('Basic_Information', 'Label', 'Basic Information',
-                extras={'title': True})
-        version = 'test_version'
-        subtopiclabel = WidgetBase('Basic_Register_Information','Label', 
-                             'Basic Register Information')
-
-        versionlabel =  WidgetBase("Version", 'Label', 
-                    "Version:" + version)
-
-        taillabel_text = "Note: Your hypervisor hasn't been registered.Please use\nthe information above to register.\n"
-        taillabel = WidgetBase('tailtext', 'Label', taillabel_text)
-        return [ 'License', 'License',
+        return [ "License", "License",
                     [
                         (headermessage,),
                         (versionlabel,),
                         (subtopiclabel,),
+                        (maclabel,),
+                        (sysuuidlabel,),
                         (taillabel,),
                         (EMPTY_LINE,),
                     ]
