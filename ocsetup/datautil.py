@@ -46,11 +46,13 @@ def datas_refresh(oc_widgets):
     """
     # some of the item don't create by _create_iteme which `certainly`
     # have attributes called ('get_conf', 'set_conf', 'show_conf', 'conf_path')
-    # so we have to do use the double_check function here.
+    # so we have to use the double_check function here.
     for i in oc_widgets.values():
         if double_check(i, 'get_conf'):
             if double_check(i, 'conf_path'):
                 v = i.get_conf(i.conf_path)
+            elif double_check(i, 'get_conf_args'):
+                v = i.get_conf(*i.get_conf_args)
             else:
                 v = i.get_conf()
             if v:
