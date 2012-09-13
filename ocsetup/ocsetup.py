@@ -37,10 +37,11 @@ from ocsetup_ui_constants import OC_NOTEBOOK_TAB_WIDTH, OC_NOTEBOOK_TAB_HEIGHT,\
                             OC_WIDTH, OC_HEIGHT,\
                             OC_HEADER_BG, OC_FOOTER_BG,\
                             OC_PAGE_WIDGET_HPADDING, OC_PAGE_LISTS_HPADDING,\
-                            OC_ALIGNMENT_LONG_TITLE_X,\
-                            OC_ALIGNMENT_LONG_TITLE_Y,\
                             OC_ALIGNMENT_TITLE_X, OC_ALIGNMENT_TITLE_Y,\
                             OC_ALIGNMENT_CONTENT_X, OC_ALIGNMENT_CONTENT_Y,\
+                            OC_PADDING_TITLE,\
+                            OC_PADDING_CONTENT_FIRST, OC_PADDING_CONTENT_NEXT,\
+                            OC_PADDING_LIST,\
                             OC_DEFAULT, GTK_SIGNAL_DESTROY, GTK_SIGNAL_SWITCH_PAGE
 from distutils.sysconfig import get_python_lib
 OVIRT_PLUGINS_PATH = get_python_lib() + '/ocsetup/plugins/'
@@ -113,39 +114,43 @@ class OcSetup(object):
                 else:
                     _item = self._create_item(item)
                 _item.get_conf = item.get('get_conf', None)
+                _item.get_conf_args = item.get('get_conf_args', None)
                 _item.set_conf = item.get('set_conf', None)
                 _item.conf_path = item.get('conf_path', None)
                 self._new_attr(item['name'] + '_' + item['type'], _item)
                 d['%s_%s' % (item['name'], item['type'])] = _item
-
-                if isinstance(_item, (gtk.CheckButton, DetailedList)):
-                    hbox.pack_start(_item, True, True,
-                                    padding=OC_PAGE_LISTS_HPADDING)
-                # HButtonBox is kind of list, use OC_PAGE_LISTS_HPADDING too.
-                elif isinstance(_item, gtk.HButtonBox):
-                    hbox.pack_start(_item, False, False,
-                                    padding=OC_PAGE_LISTS_HPADDING)
-                else:
-                    hbox.pack_start(_item, False, False)
-                if item.get('title'):
-                    if isinstance(_item, gtk.Label) \
-                    and len(_item.get_label()) > OC_TEXT_WIDTH:
-                        _item.set_alignment(OC_ALIGNMENT_LONG_TITLE_X,
-                                            OC_ALIGNMENT_LONG_TITLE_Y)
-                    else:
-                        _item.set_alignment(OC_ALIGNMENT_TITLE_X,
-                                            OC_ALIGNMENT_TITLE_Y)
-                else:
-                    if hasattr(_item, 'set_alignment'):
-                        if isinstance(_item, gtk.Entry):
-                            _item.set_alignment(OC_ALIGNMENT_CONTENT_X)
-                        else:
-                            _item.set_alignment(OC_ALIGNMENT_CONTENT_X,
-                                                OC_ALIGNMENT_CONTENT_Y)
                 if isinstance(_item, DetailedList):
                     hbox.set_size_request(OC_DEFAULT, OC_DETAILEDLIST_HEIGHT)
                 if item.get('vhelp'):
                     hbox.set_size_request(OC_DEFAULT, item['vhelp'])
+                # We need to set 'DOUBLE ALIGMENT HERE:'
+                # first sets the alignment of text inside the hbox label.
+                # then, sets the the alignment of label inside the hbox.
+                # and finally, pack the widget into the hbox.
+                if hasattr(_item, 'set_alignment'):
+                    if isinstance(_item, gtk.Entry):
+                        _item.set_alignment(OC_ALIGNMENT_CONTENT_X)
+                    else:
+                        _item.set_alignment(OC_ALIGNMENT_CONTENT_X,
+                                            OC_ALIGNMENT_CONTENT_Y)
+                alig = gtk.Alignment()
+                alig.add(_item)
+                if item.get('title'):
+                    alig.set_padding(0, 0, OC_PADDING_TITLE, 0)
+                else:
+                    if i == 0:
+                        alig.set_padding(0, 0, OC_PADDING_CONTENT_FIRST, 0)
+                    else:
+                        alig.set_padding(0, 0, OC_PADDING_CONTENT_NEXT, 0)
+                # HButtonBox is kind of list, use OC_PAGE_LISTS_HPADDING too.
+                if isinstance(_item, (gtk.CheckButton, DetailedList)):
+                    if isinstance(_item, DetailedList):
+                        alig.set(0, 0, 1, 1)
+                        alig.set_padding(0, 0,
+                                        OC_PADDING_LIST, OC_PADDING_LIST)
+                    hbox.pack_start(alig, True, True)
+                else:
+                    hbox.pack_start(alig, False, False)
             vbox.pack_start(hbox, False, False,
                                 padding=OC_PAGE_WIDGET_HPADDING)
         vbox.oc_widgets = d
