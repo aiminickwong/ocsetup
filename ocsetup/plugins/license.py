@@ -25,8 +25,10 @@ import traceback
 from ovirtnode.ovirtfunctions import log
 
 sys.path.append("/usr/share/vdsm-reg")
-from license_utils import hasRegistered, getVersionInfo, getLicenseConfig, hasStarted, \
-                          setLicenseConfig, computeDeprecatedDays, DEFAULTREMAININGDAYS
+from ovirtnode.license_utils import hasRegistered, getVersionInfo,\
+                          getLicenseConfig, hasStarted,\
+                          setLicenseConfig, computeDeprecatedDays,\
+                          DEFAULTREMAININGDAYS
 from ocsetup.wrapper_ovirtfunctions import PluginBase
 from ocsetup.ocsetup_ui import WidgetBase, EMPTY_LINE
 
