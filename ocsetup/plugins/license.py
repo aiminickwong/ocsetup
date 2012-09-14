@@ -46,8 +46,7 @@ class Plugin(PluginBase):
             hasstart = hasStarted()
 
             headermessage = WidgetBase("Basic_Information", "Label", "Basic Information",
-                    extras={'title': True})
-
+                    title=True)
 
             #show hypervisor version information
             version = getVersionInfo()
@@ -56,18 +55,18 @@ class Plugin(PluginBase):
 
             #show register information
             subtopiclabel = WidgetBase("SUB_TOPIC_LABEL", "Label",
-                    "Basic Register Information: ")
+                    "Basic Register Information: ", title=True)
 
-            macinfo = getLicenseConfig("vars", "mac", "F0:DE:F1:00:00:00")
-            maclabel = WidgetBase("MAC_LABEL", "Label", "  Mac: "+macinfo)
+            maclabel = WidgetBase("MAC_LABEL", "Label", "",
+                    get_conf=lambda : "MAC :  " +
+                    getLicenseConfig("vars", "mac", "F0:DE:F1:00:00:00"))
 
-            sysuuidinfo = getLicenseConfig("vars", "systemuuid",
-                    "00000000-0000-0000-0000-000000000000")
-            sysuuidlabel = WidgetBase("SYSTEMUUID_LABEL", "Label", "  SystemUUID: "+sysuuidinfo)
+            sysuuidlabel = WidgetBase("SYSTEMUUID_LABEL", "Label", "",
+                    get_conf=lambda : "UUID :  " +
+                    getLicenseConfig("vars", "systemuuid", "00000000-0000-0000-0000-000000000000"))
 
             if hasstart and hasregister:
-                taillabel_text = "Note: Your hypervisor has been registered successfully.\n \
-                Any question, please contact : service@cloud-times.com!"
+                taillabel_text = "Your hypervisor has been registered successfully.Any question, please contact : service@cloud-times.com!"
             else:
                 days, issuccess = computeDeprecatedDays()
                 if issuccess:
@@ -78,9 +77,9 @@ class Plugin(PluginBase):
                 else:
                     log("Failed to invoke computeDeprecatedDays. ")
                 warninginfo = "You have " + str(remaindays) + " to use before registering."
-                taillabel_text = "Note: Your hypervisor hasn't been registered.Please use\nthe information above to register.\n"+warninginfo
-
-            taillabel = WidgetBase("TAIL_LABEL", "Label", taillabel_text)
+                taillabel_text = "Your hypervisor hasn't been registered.Please use the information above to register."+warninginfo
+            note = WidgetBase("note", "Label", "Note:", title=True)
+            taillabel = WidgetBase("TAIL_LABEL", "Label", taillabel_text, width=80)
         except:
             log("Here some error happened.format ext:  %s " % traceback.format_exc())
 
@@ -91,6 +90,7 @@ class Plugin(PluginBase):
                         (subtopiclabel,),
                         (maclabel,),
                         (sysuuidlabel,),
+                        (note,),
                         (taillabel,),
                         (EMPTY_LINE,),
                     ]
