@@ -47,7 +47,7 @@ class WidgetBase(dict):
         for key in ('title', 'get_conf', 'get_conf_args',
                     'set_conf', 'set_conf_args',
                     'show_conf', 'conf_path',
-                    'params', 'vhelp'):
+                    'params', 'vhelp', 'width'):
             v = kwargs.get(key, None)
             self.__setitem__(key, v)
 

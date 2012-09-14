@@ -179,11 +179,12 @@ class OcSetup(object):
         elif label and hasattr(item, 'set_label'):
             item.set_label(label)
         if itype == 'Label':
-            item.set_width_chars(OC_TEXT_WIDTH)
+            text_width = data.get('width') or OC_TEXT_WIDTH
+            item.set_width_chars(text_width)
             if len(label) > OC_TEXT_WIDTH:
                 item.set_line_wrap(True)
                 item.set_size_request(OC_DEFAULT,
-                                OC_TEXT_HEIGHT*((len(label)//OC_TEXT_WIDTH)+1))
+                                OC_TEXT_HEIGHT*((len(label)//text_width)+1))
         return item
 
 
