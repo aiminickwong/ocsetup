@@ -14,6 +14,5 @@ ocsetup/wrapper_ovirtfunctions.py
 ocsetup/plugins/__init__.py
 ocsetup/plugins/imvp.py
 ocsetup/plugins/license.py
-ocsetup/plugins/license_utils.py
 po/your_lang.po
 po/zh_CN.po
