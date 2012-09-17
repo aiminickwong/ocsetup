@@ -41,7 +41,7 @@ class PluginBase(object):
     Configuration plugins are modules in ovirt_config_setup package.
     They provide implementation of this base class, adding specific
     form elements and processing.
-    
+
     Because we only need to two parameters to init a plug in ocsetup,
     (origin version needs three), so we override this PluginBase.
     """
