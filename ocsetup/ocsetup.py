@@ -97,5 +97,6 @@ class OcSetup(object):
 
 
 def run():
-    OcSetup(layouts)
+    global ocs
+    ocs = OcSetup(layouts)
     gtk.main()

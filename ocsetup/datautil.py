@@ -195,3 +195,8 @@ def read_nics():
             nics.append([dev_interface, dev_conf_status,
                         dev_vendor, dev_address])
     return nics
+
+def refresh_window(obj):
+    while hasattr(obj, 'oc_widgets') == False:
+        obj = obj.get_parent()
+    datas_refresh(obj.oc_widgets)
