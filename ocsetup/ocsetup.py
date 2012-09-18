@@ -26,24 +26,16 @@ import sys
 import os
 import datautil
 from ocsetup_ui import layouts
-from ocsetup_ui_widgets import ShellWindow, LogWindow, DetailedList,\
-                               ColorLabel
+from ocsetup_ui_widgets import ShellWindow, LogWindow, ColorLabel, OcPage
 from ocsetup_ui_constants import OC_NOTEBOOK_TAB_WIDTH, OC_NOTEBOOK_TAB_HEIGHT,\
                             OC_NOTEBOOK_WIDTH, OC_NOTEBOOK_HEIGHT,\
-                            OC_TEXT_WIDTH, OC_TEXT_HEIGHT,\
-                            OC_DETAILEDLIST_HEIGHT,\
                             OC_HEADER_HEIGHT, \
                             OC_FOOTER_HEIGHT,\
                             OC_WIDTH, OC_HEIGHT,\
                             OC_HEADER_BG, OC_FOOTER_BG,\
-                            OC_PAGE_WIDGET_HPADDING, OC_PAGE_LISTS_HPADDING,\
-                            OC_ALIGNMENT_TITLE_X, OC_ALIGNMENT_TITLE_Y,\
-                            OC_ALIGNMENT_CONTENT_X, OC_ALIGNMENT_CONTENT_Y,\
-                            OC_PADDING_TITLE,\
-                            OC_PADDING_CONTENT_FIRST, OC_PADDING_CONTENT_NEXT,\
-                            OC_PADDING_LIST,\
-                            OC_DEFAULT, GTK_SIGNAL_DESTROY, GTK_SIGNAL_SWITCH_PAGE
+                            GTK_SIGNAL_DESTROY, GTK_SIGNAL_SWITCH_PAGE
 from distutils.sysconfig import get_python_lib
+from wrapper_ovirtfunctions import new_attr
 OVIRT_PLUGINS_PATH = get_python_lib() + '/ocsetup/plugins/'
 sys.path.append(OVIRT_PLUGINS_PATH)
 
@@ -78,10 +70,10 @@ class OcSetup(object):
                         pass
         for page in pages:
             tab = gtk.Label(page[1])
-            self._new_attr('tab_' + page[0], tab)
+            new_attr(self, 'tab_' + page[0], tab)
             tab.set_size_request(OC_NOTEBOOK_TAB_WIDTH, OC_NOTEBOOK_TAB_HEIGHT)
             # we need to call _create_page to create self.xxx_page
-            _page = self._new_attr('page_' + page[0], self._create_page(page))
+            _page = new_attr(self, 'page_' + page[0], self._create_page(page))
             self.notebook.append_page(_page, tab)
         header_img = ColorLabel('', OC_HEADER_BG)
         header_img.set_size_request(OC_WIDTH, OC_HEADER_HEIGHT)
@@ -95,97 +87,13 @@ class OcSetup(object):
         self.window.show_all()
 
     def _create_page(self, layout):
-        vbox = gtk.VBox(False, 10)
-        self.pages[layout[0]] = {}
-        d = self.pages[layout[0]]
-        for ir, item_row in enumerate(layout[2]):
-            hbox = gtk.HBox(False)
-            if ir == (len(layout[2]) - 1):
-                hbox.pack_start(gtk.Label(), True, False)
-            for i, item in enumerate(item_row):
-                # check to create item via gtk basic class
-                # or via comstum functions which is callable
-                if callable(item['type']):
-                    if item.get('params'):
-                        _item = item['type'](item['params'])
-                    else:
-                        _item = item['type']()
-                    item['type'] = 'custom'
-                else:
-                    _item = self._create_item(item)
-                _item.get_conf = item.get('get_conf', None)
-                _item.get_conf_args = item.get('get_conf_args', None)
-                _item.set_conf = item.get('set_conf', None)
-                _item.conf_path = item.get('conf_path', None)
-                self._new_attr(item['name'] + '_' + item['type'], _item)
-                d['%s_%s' % (item['name'], item['type'])] = _item
-                if isinstance(_item, DetailedList):
-                    hbox.set_size_request(OC_DEFAULT, OC_DETAILEDLIST_HEIGHT)
-                if item.get('vhelp'):
-                    hbox.set_size_request(OC_DEFAULT, item['vhelp'])
-                # We need to set 'DOUBLE ALIGMENT HERE:'
-                # first sets the alignment of text inside the hbox label.
-                # then, sets the the alignment of label inside the hbox.
-                # and finally, pack the widget into the hbox.
-                if hasattr(_item, 'set_alignment'):
-                    if isinstance(_item, gtk.Entry):
-                        _item.set_alignment(OC_ALIGNMENT_CONTENT_X)
-                    else:
-                        _item.set_alignment(OC_ALIGNMENT_CONTENT_X,
-                                            OC_ALIGNMENT_CONTENT_Y)
-                alig = gtk.Alignment()
-                alig.add(_item)
-                if item.get('title'):
-                    alig.set_padding(0, 0, OC_PADDING_TITLE, 0)
-                else:
-                    if i == 0:
-                        alig.set_padding(0, 0, OC_PADDING_CONTENT_FIRST, 0)
-                    else:
-                        alig.set_padding(0, 0, OC_PADDING_CONTENT_NEXT, 0)
-                # HButtonBox is kind of list, use OC_PAGE_LISTS_HPADDING too.
-                if isinstance(_item, (gtk.CheckButton, DetailedList)):
-                    if isinstance(_item, DetailedList):
-                        alig.set(0, 0, 1, 1)
-                        alig.set_padding(0, 0,
-                                        OC_PADDING_LIST, OC_PADDING_LIST)
-                    hbox.pack_start(alig, True, True)
-                else:
-                    hbox.pack_start(alig, False, False)
-            vbox.pack_start(hbox, False, False,
-                                padding=OC_PAGE_WIDGET_HPADDING)
-        vbox.oc_widgets = d
-        return vbox
-
-    def _new_attr(self, attr_name, attr_value):
-        """
-        create a attribute 'attr_name' with value 'attr_value'
-        to instance then return the attr_value
-        """
-        self.__setattr__(attr_name, attr_value)
-        return self.__getattribute__(attr_name)
+        page = OcPage(layout)
+        self.pages[layout[0]] = page.oc_widgets
+        return page
 
     def _handle_switch_page(self, notebook, page, page_num):
         curpage = notebook.get_nth_page(page_num)
         datautil.datas_refresh(curpage.oc_widgets)
-
-    def _create_item(self, data):
-        itype = data['type']
-        label = data.get('label')
-        value = data.get('value')
-        item = getattr(gtk, itype)()
-        item.set_size_request(OC_DEFAULT, OC_TEXT_HEIGHT)
-        if value and hasattr(item, 'set_text'):
-            item.set_text(value)
-        elif label and hasattr(item, 'set_label'):
-            item.set_label(label)
-        if itype == 'Label':
-            text_width = data.get('width') or OC_TEXT_WIDTH
-            item.set_width_chars(text_width)
-            if len(label) > OC_TEXT_WIDTH:
-                item.set_line_wrap(True)
-                item.set_size_request(OC_DEFAULT,
-                                OC_TEXT_HEIGHT*((len(label)//text_width)+1))
-        return item
 
 
 def run():

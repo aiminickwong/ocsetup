@@ -27,6 +27,16 @@ from subprocess import Popen, PIPE
 def check_output(*args):
     return Popen(args, stdout=PIPE).communicate()[0]
 
+
+def new_attr(obj, attr_name, attr_value):
+    """
+    create a attribute 'attr_name' with value 'attr_value'
+    to instance then return the attr_value
+    """
+    obj.__setattr__(attr_name, attr_value)
+    return obj.__getattribute__(attr_name)
+
+
 exec_extra_buttons_cmds = {
         "restart":   "echo 'restart'",
         "power_off": "echo 'power_off'",
@@ -51,7 +61,6 @@ class PluginBase(object):
         """Initialize a PluginBase instance
 
         name -- configuration option label
-        screen -- parent NodeConfigScreen
         """
         self.name = name
         """A name of the configuration option."""

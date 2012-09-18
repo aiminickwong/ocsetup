@@ -26,8 +26,20 @@ from ocsetup_ui_constants import OC_SELECTED_BTN_BG, OC_SELECTED_TAB_BG,\
                             OC_LOG_PAGE_BG, OC_INIT_BTN_BG,\
                             OC_BUTTON_LIST_HEIGHT, OC_COLOR_BUTTON_HEIGHT,\
                             OC_LOG_WIN_WIDTH, OC_LOG_WIN_HEIGHT,\
-                            OC_DETAILED_LIST_HEIGHT, GTK_SIGNAL_KEY_PRESS, GTK_SIGNAL_CHILD_EXIT, GTK_SIGNAL_CLICKED
+                            OC_ALIGNMENT_TITLE_X, OC_ALIGNMENT_TITLE_Y,\
+                            OC_ALIGNMENT_CONTENT_X, OC_ALIGNMENT_CONTENT_Y,\
+                            OC_PAGE_WIDGET_HPADDING,\
+                            OC_PADDING_CONTENT_FIRST,\
+                            OC_PADDING_CONTENT_NEXT,\
+                            OC_PADDING_TITLE,\
+                            OC_PADDING_LIST,\
+                            OC_TEXT_WIDTH, OC_TEXT_HEIGHT,\
+                            OC_DETAILEDLIST_HEIGHT,\
+                            OC_DETAILED_LIST_HEIGHT, GTK_SIGNAL_KEY_PRESS,\
+                            GTK_SIGNAL_CHILD_EXIT, GTK_SIGNAL_CLICKED,\
+                            OC_DEFAULT
 import datautil
+from wrapper_ovirtfunctions import new_attr
 
 class ColorWidget(gtk.EventBox):
 
@@ -266,3 +278,81 @@ class ConfirmDialog(gtk.MessageDialog):
         resp_id = self.run()
         self.destroy()
         return resp_id
+
+
+class OcPage(gtk.VBox):
+
+    def __init__(self, layout):
+        super(OcPage, self).__init__(False, 10)
+        self.oc_widgets = {}
+        for ir, item_row in enumerate(layout[2]):
+            hbox = gtk.HBox(False)
+            if ir == (len(layout[2]) - 1):
+                hbox.pack_start(gtk.Label(), True, False)
+            for i, item in enumerate(item_row):
+                # check to create item via gtk basic class
+                # or via comstum functions which is callable
+                if callable(item['type']):
+                    if item.get('params'):
+                        _item = item['type'](item['params'])
+                    else:
+                        _item = item['type']()
+                    item['type'] = 'custom'
+                else:
+                    _item = self._create_item(item)
+                _item.get_conf = item.get('get_conf', None)
+                _item.get_conf_args = item.get('get_conf_args', None)
+                _item.set_conf = item.get('set_conf', None)
+                _item.conf_path = item.get('conf_path', None)
+                new_attr(self, item['name'] + '_' + item['type'], _item)
+                self.oc_widgets['%s_%s' % (item['name'], item['type'])] = _item
+                if isinstance(_item, DetailedList):
+                    hbox.set_size_request(OC_DEFAULT, OC_DETAILEDLIST_HEIGHT)
+                if item.get('vhelp'):
+                    hbox.set_size_request(OC_DEFAULT, item['vhelp'])
+                # We need to set 'DOUBLE ALIGMENT HERE:'
+                # first sets the alignment of text inside the hbox label.
+                # then, sets the the alignment of label inside the hbox.
+                # and finally, pack the widget into the hbox.
+                if hasattr(_item, 'set_alignment'):
+                    if isinstance(_item, gtk.Entry):
+                        _item.set_alignment(OC_ALIGNMENT_CONTENT_X)
+                    else:
+                        _item.set_alignment(OC_ALIGNMENT_CONTENT_X,
+                                            OC_ALIGNMENT_CONTENT_Y)
+                alig = gtk.Alignment()
+                alig.add(_item)
+                if item.get('title'):
+                    alig.set_padding(0, 0, OC_PADDING_TITLE, 0)
+                else:
+                    if i == 0:
+                        alig.set_padding(0, 0, OC_PADDING_CONTENT_FIRST, 0)
+                    else:
+                        alig.set_padding(0, 0, OC_PADDING_CONTENT_NEXT, 0)
+                if isinstance(_item, (gtk.CheckButton, DetailedList)):
+                    alig.set(0, 0, 1, 1)
+                    alig.set_padding(0, 0, OC_PADDING_LIST, OC_PADDING_LIST)
+                    hbox.pack_start(alig, True, True)
+                else:
+                    hbox.pack_start(alig, False, False)
+            self.pack_start(hbox, False, False,
+                                padding=OC_PAGE_WIDGET_HPADDING)
+
+    def _create_item(self, data):
+        itype = data['type']
+        label = data.get('label')
+        value = data.get('value')
+        item = getattr(gtk, itype)()
+        item.set_size_request(OC_DEFAULT, OC_TEXT_HEIGHT)
+        if value and hasattr(item, 'set_text'):
+            item.set_text(value)
+        elif label and hasattr(item, 'set_label'):
+            item.set_label(label)
+        if itype == 'Label':
+            text_width = data.get('width') or OC_TEXT_WIDTH
+            item.set_width_chars(text_width)
+            if len(label) > OC_TEXT_WIDTH:
+                item.set_line_wrap(True)
+                item.set_size_request(OC_DEFAULT,
+                                OC_TEXT_HEIGHT*((len(label)//text_width)+1))
+        return item
