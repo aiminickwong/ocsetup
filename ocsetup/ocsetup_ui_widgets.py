@@ -37,6 +37,7 @@ from ocsetup_ui_constants import OC_SELECTED_BTN_BG, OC_SELECTED_TAB_BG,\
                             OC_DETAILEDLIST_HEIGHT,\
                             OC_DETAILED_LIST_HEIGHT, GTK_SIGNAL_KEY_PRESS,\
                             GTK_SIGNAL_CHILD_EXIT, GTK_SIGNAL_CLICKED,\
+                            GTK_SIGNAL_CLICK_DETAILLIST,\
                             OC_DEFAULT
 import datautil
 from wrapper_ovirtfunctions import new_attr
@@ -151,6 +152,12 @@ class DetailedList(gtk.ScrolledWindow):
         labels = data['labels']
         liststore = gtk.ListStore(*([str] * len(labels)))
         self.treeview = gtk.TreeView(liststore)
+        if data.get('callback'):
+            self.treeview.connect(data.get('signal',
+                                    GTK_SIGNAL_CLICK_DETAILLIST),
+                                  data['callback'])
+        # store a copy of dats for callback to use.
+        self.treeview.treeview_datas = []
         for idx, label in enumerate(labels):
             self.treeview.insert_column_with_attributes(-1,
                 label, gtk.CellRendererText(), text=idx)
@@ -161,6 +168,7 @@ class DetailedList(gtk.ScrolledWindow):
     def show_conf(self, list_of_entry):
         self._liststore.clear()
         for v in list_of_entry:
+            self.treeview.treeview_datas.append(v)
             self._liststore.append(v)
 
 
