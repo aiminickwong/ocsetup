@@ -39,7 +39,7 @@ class Plugin(PluginBase):
     def storage_apply(self, obj):
         from ocsetup.ocsetup import ocs
         log("enter storage apply")
-        set_iscsi_initiator(ocs.iscsi_initiator_name_value_Entry.get_text())
+        set_iscsi_initiator(ocs.page_Storage.iscsi_initiator_name_value_Entry.get_text())
 
     def storage_reset(self, obj):
         log("enter storage reset")
