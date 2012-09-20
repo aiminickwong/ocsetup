@@ -38,6 +38,7 @@ from ocsetup_ui_constants import OC_SELECTED_BTN_BG, OC_SELECTED_TAB_BG,\
                             OC_DETAILED_LIST_HEIGHT, GTK_SIGNAL_KEY_PRESS,\
                             GTK_SIGNAL_CHILD_EXIT, GTK_SIGNAL_CLICKED,\
                             GTK_SIGNAL_CLICK_DETAILLIST,\
+                            OC_WIDTH, OC_HEIGHT,\
                             OC_DEFAULT
 import datautil
 from wrapper_ovirtfunctions import new_attr
@@ -128,20 +129,47 @@ class ButtonList(gtk.HButtonBox):
         signal = data.get('signal', 'clicked')
         btn_type = data.get('type', 'Button')
         self.set_layout(gtk.BUTTONBOX_END)
+        self.btns = []
         for t, cb in zip(labels, callbacks):
             btn = getattr(gtk, btn_type)(t)
             btn.connect(signal, cb)
+            self.btns.append(btn)
             self.pack_start(btn, False, False, padding=5)
         self.set_size_request(-1, OC_BUTTON_LIST_HEIGHT)
 
+class RadioButtonList(gtk.HButtonBox):
+
+    def __init__(self, data):
+        super(RadioButtonList, self).__init__()
+        labels = data['labels']
+        btn_nr = len(labels)
+        signal = data.get('signal', 'group-changed')
+        callbacks = data.get('callback', [lambda _:_]*btn_nr)
+        btn_nr = len(labels)
+        self.set_layout(gtk.BUTTONBOX_END)
+        self.btns = []
+        for t, cb in zip(labels, callbacks):
+            if len(self.btns) == 0:
+                btn = gtk.RadioButton(None, t)
+            else:
+                btn = gtk.RadioButton(self.btns[-1], t)
+            btn.connect(signal, cb)
+            self.btns.append(btn)
+            self.pack_start(btn, False, False, padding=5)
+        self.set_size_request(-1, OC_BUTTON_LIST_HEIGHT)
+
+
+
 class ApplyResetBtn(ButtonList):
 
-    def __init__(self):
+    def __init__(self, apply_cb=None, reset_cb=None):
+        apply_cb = apply_cb or datautil.conf_apply
+        reset_cb = reset_cb or datautil.conf_reset
         super(ApplyResetBtn, self).__init__({'labels':
                                             ['Apply', 'Reset'],
                                             'callback':
-                                            [datautil.conf_apply,
-                                            lambda _:_]
+                                            [apply_cb,
+                                             reset_cb]
                                             })
 
 class DetailedList(gtk.ScrolledWindow):
@@ -170,7 +198,6 @@ class DetailedList(gtk.ScrolledWindow):
         for v in list_of_entry:
             self.treeview.treeview_datas.append(v)
             self._liststore.append(v)
-
 
 class ShellWindow(gtk.Window):
 
@@ -271,6 +298,21 @@ class LogWindow(gtk.Window):
 
     def log_show(self, _, filename):
         self.logshell.shell_show('less %s; exit\n' % filename)
+
+
+class NetworkDetailWindows(gtk.Window):
+
+    def __init__(self, obj, path, row):
+        super(NetworkDetailWindows, self).__init__(gtk.WINDOW_TOPLEVEL)
+        self.set_position(gtk.WIN_POS_CENTER)
+        self.set_default_size(OC_WIDTH, OC_HEIGHT)
+        from ocsetup_ui import NetworkDetail
+        page_layout = NetworkDetail(obj.treeview_datas[path[0]])
+        page = OcPage(page_layout)
+        new_attr(self, 'page_' + page_layout[0], page)
+        self.add(page)
+        datautil.datas_refresh(page.oc_widgets)
+        self.show_all()
 
 class ConfirmDialog(gtk.MessageDialog):
 

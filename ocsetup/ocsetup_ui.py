@@ -24,11 +24,13 @@
 import gtk
 import sys
 from ocsetup_ui_widgets import ButtonList, DetailedList,\
-                               ConfirmDialog, ApplyResetBtn
-from ovirtnode.ovirtfunctions import system_closefds, augtool_get
+                               ConfirmDialog, ApplyResetBtn, RadioButtonList
+from ovirtnode.ovirtfunctions import system_closefds, augtool_get,\
+                                augtool, nic_link_detected
 from wrapper_ovirtfunctions import exec_extra_buttons_cmds
 import gettext
 import datautil
+from ovirtnode.network import Network
 from ocsetup_conf_paths import *
 sys.path.append('..')
 gettext.bindtextdomain('ocsetup', '/usr/share/locale/')
@@ -61,9 +63,6 @@ def load_pic(filename, w, h):
     return image
 
 
-def network_detail_back(obj):
-    w = obj.get_window()
-    w.hide()
 
 
 class OcLayout(list):
@@ -150,7 +149,6 @@ class OcLogging(OcLayout):
                     )
         return self
 
-
 class OcNetwork(OcLayout):
 
     def __init__(self):
@@ -166,19 +164,51 @@ class OcNetwork(OcLayout):
 
         DNS_SERVER1_label = WidgetBase('dns_server1', 'Label', _('DNS Server1:'))
         DNS_SERVER1_value = WidgetBase('dns_server1', 'Entry',
-                        get_conf=augtool_get, conf_path=DNS_SERVER1_PATH)
+                        get_conf=augtool_get, conf_path=DNS_SERVER1_PATH,
+                        set_conf=datautil.augtool_set)
         DNS_SERVER2_label = WidgetBase('dns_server2', 'Label', _('DNS Server2:'))
         DNS_SERVER2_value = WidgetBase('dns_server2', 'Entry',
-                        get_conf=augtool_get, conf_path=DNS_SERVER2_PATH)
+                        get_conf=augtool_get, conf_path=DNS_SERVER2_PATH,
+                        set_conf=datautil.augtool_set)
         NTP_SERVER1_label = WidgetBase('ntp_server1', 'Label', _('NTP Server1:'))
         NTP_SERVER1_value = WidgetBase('ntp_server1', 'Entry',
-                        get_conf=augtool_get, conf_path=NTP_SERVER1_PATH)
+                        get_conf=augtool_get, conf_path=NTP_SERVER1_PATH,
+                        set_conf=datautil.augtool_set)
         NTP_SERVER2_label = WidgetBase('ntp_server2', 'Label', _('NTP Server2:'))
         NTP_SERVER2_value = WidgetBase('ntp_server2', 'Entry',
-                        get_conf=augtool_get, conf_path=NTP_SERVER2_PATH)
+                        get_conf=augtool_get, conf_path=NTP_SERVER2_PATH,
+                        set_conf=datautil.augtool_set)
+
+        # need to do some hack to import and run the codes
+        # from ocsetup_ui_widgets.
+        def show_networkdetail_cb(obj, path, row):
+            from ocsetup_ui_widgets import NetworkDetailWindows
+            network_detail_win = NetworkDetailWindows(obj, path, row)
+            network_page = network_detail_win.page_network_detail
+            network_page.ipv4_address_Entry.set_property("editable", False)
+            network_page.ipv4_netmask_Entry.set_property("editable", False)
+            network_page.ipv4_gateway_Entry.set_property("editable", False)
+            network_page.ipv4_address_Entry.set_text("Field is disabled")
+            network_page.ipv4_netmask_Entry.set_text("Field is disabled")
+            network_page.ipv4_gateway_Entry.set_text("Field is disabled")
+
+            def static_cb(btn, page):
+                state = page.ipv4_address_Entry.get_property('editable')
+                page.ipv4_address_Entry.set_text("Field is disabled" if state else '')
+                page.ipv4_netmask_Entry.set_text("Field is disabled" if state else '')
+                page.ipv4_gateway_Entry.set_text("Field is disabled" if state else '')
+                page.ipv4_address_Entry.set_property("editable", not state)
+                page.ipv4_netmask_Entry.set_property("editable", not state)
+                page.ipv4_gateway_Entry.set_property("editable", not state)
+
+            network_page.ipv4_settings_custom.btns[1].connect("toggled", static_cb, network_page)
+
+
         NETWORK_LIST = WidgetBase('network_network_list', DetailedList, '',
                 params={'labels': [_('Device'), _('Status'), _('Model'),
-                        _('MAC Address')]}, get_conf=datautil.read_nics)
+                        _('MAC Address')],
+                        'callback': show_networkdetail_cb},
+                get_conf=lambda : datautil.read_nics(datautil.filter_rn_get_list))
         changes_network = WidgetBase('network_apply_reset', ApplyResetBtn)
         self.append([
                     (System_Identification, ),
@@ -193,6 +223,77 @@ class OcNetwork(OcLayout):
                     (changes_network,),
                     ])
         return self
+
+
+class NetworkDetail(OcLayout):
+
+    def __init__(self, treeview_datas):
+        super(NetworkDetail, self).__init__('network_detail', 'invisible_tab')
+        ifname = treeview_datas[0]
+        dev_interface, dev_bootproto, dev_vendor, dev_address,\
+        dev_driver, dev_conf_status, dev_bridge = datautil.read_nics(lambda allinfos: allinfos[0][ifname].split(','))
+        if nic_link_detected(ifname):
+            link_status = "Active"
+        else:
+            link_status = "Inactive"
+        network_detail_if = WidgetBase('interface', 'Label', '',
+                get_conf = lambda : _("Interface: ") + dev_interface)
+        network_detail_driver = WidgetBase('driver', 'Label', '',
+                get_conf = lambda : _("Driver: ") + dev_driver)
+        network_detail_proto = WidgetBase('protocol', 'Label', '',
+                get_conf = lambda : _('Protocol: ') + dev_bootproto)
+        network_detail_vendor = WidgetBase('vendor', 'Label', '',
+                get_conf = lambda : _('Vendor: ') + dev_vendor)
+        network_detail_link_status = WidgetBase('link_status', 'Label', '',
+                get_conf = lambda : _('Link Status: ') + link_status)
+        network_detail_mac_address = WidgetBase('mac_address', 'Label', '',
+                get_conf = lambda : _('Mac Address: ') + dev_address)
+        network_detail_ipv4_setting_label = WidgetBase('ipv4_setting', 'Label', _('IPV4 Settings:'))
+        network_detail_ipv4_settings = WidgetBase('ipv4_settings', RadioButtonList, '',
+                params={'labels': ['Disable', 'Static'], 'type': 'CheckButton'})
+        network_detail_ipv4_address = WidgetBase('ipv4_address', 'Label', 'IP Address:')
+        network_detail_ipv4_address_val = WidgetBase('ipv4_address', 'Entry',
+                set_conf=datautil.augtool_set, conf_path=NIC_IP_PATH)
+        network_detail_ipv4_netmask = WidgetBase('ipv4_netmask', 'Label', 'Netmask:')
+        network_detail_ipv4_netmask_val = WidgetBase('ipv4_netmask', 'Entry',
+                set_conf=datautil.augtool_set, conf_path=NIC_NETMASK_PATH)
+        network_detail_ipv4_gateway = WidgetBase('ipv4_gateway', 'Label', 'Gateway:')
+        network_detail_ipv4_gateway_val = WidgetBase('ipv4_gateway', 'Entry',
+                set_conf=datautil.augtool_set, conf_path=NIC_GATEWAY_PATH)
+        network_detail_vlan_id = WidgetBase('vlan_id', 'Label', _('Vlan Id'))
+        network_detail_vlan_id_val = WidgetBase('vlan_id', 'Entry',
+                set_conf=datautil.augtool_set, conf_path=NIC_VLAN_PATH)
+        network_detail_back = WidgetBase('ipv4_back', ButtonList, '',
+                params={'labels': ['Back'], 'callback': [self.network_detail_back]})
+        network_change = WidgetBase('network_detail_apply_reset', ApplyResetBtn, params=(self.network_apply_cb))
+        self.append([
+                (network_detail_if, network_detail_driver),
+                (network_detail_proto, network_detail_vendor),
+                (network_detail_link_status, network_detail_mac_address),
+                (WidgetBase('empty', 'Label', '', vhelp=30),),
+                (network_detail_ipv4_setting_label,),
+                (network_detail_ipv4_settings,),
+                (network_detail_ipv4_address, network_detail_ipv4_address_val),
+                (network_detail_ipv4_netmask, network_detail_ipv4_netmask_val),
+                (network_detail_ipv4_gateway, network_detail_ipv4_gateway_val),
+                (WidgetBase('empty', 'Label', '', vhelp=30),),
+                (network_detail_vlan_id, network_detail_vlan_id_val,),
+                (network_change, network_detail_back,),
+                ])
+
+    def network_detail_back(self, obj):
+        w = obj.get_window()
+        w.hide()
+
+    def network_apply_cb(self, btn):
+        # we need to do 2 steps to apply
+        # a network configuration.
+        # first write config to /etc/default/ovirt
+        # then 'actually' apply the configuration.
+        datautil.conf_apply(btn)
+        network = Network()
+        network.configure_interface()
+        network.save_network_configuration()
 
 
 class OcSecurity(OcLayout):
@@ -212,7 +313,7 @@ class OcSecurity(OcLayout):
                                                 _('Confirm Password:'))
         local_access_password_confirm_value = WidgetBase('local_access_password_confirm',
                                                         'Entry', '')
-        Changes_Security = WidgetBase('security_apply_reset', ApplyResetBtn)
+        Changes_Security = WidgetBase('security_apply_reset', ApplyResetBtn, )
         self.append([
                     (remote_access,),
                     (enable_ssh,),

@@ -20,8 +20,13 @@
 #
 
 
+OVIRT_DEFAULTS = "etc/default/ovirt"
 # use augtool_get to read the configuration values.
 DNS_SERVER1_PATH = "/files/etc/resolv.conf/nameserver[1]"
 DNS_SERVER2_PATH = "/files/etc/resolv.conf/nameserver[2]"
 NTP_SERVER1_PATH = "/files/etc/ntp.conf/server[1]"
 NTP_SERVER2_PATH = "/files/etc/ntp.conf/server[2]"
+NIC_IP_PATH      = "/files/" + OVIRT_DEFAULTS + "/OVIRT_IP_ADDRESS"
+NIC_NETMASK_PATH = "/files/" + OVIRT_DEFAULTS + "/OVIRT_IP_NETMASK"
+NIC_GATEWAY_PATH = "/files/" + OVIRT_DEFAULTS + "/OVIRT_IP_GATEWAY"
+NIC_VLAN_PATH    = "/files/" + OVIRT_DEFAULTS + "/OVIRT_VLAN"

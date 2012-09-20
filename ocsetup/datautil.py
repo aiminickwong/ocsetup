@@ -22,7 +22,7 @@
 
 import os
 from ovirtnode.ovirtfunctions import  network_up, aug, logical_to_physical_networks,\
-                            augtool_get, logger,\
+                            augtool, augtool_get, logger,\
                             has_ip_address, get_ipv6_address, get_ip_address,\
                             nic_link_detected, pad_or_trim
 from ovirtnode.network import get_system_nics
@@ -34,7 +34,6 @@ import gtk
 OVIRT_VARS = {}
 
 
-OVIRT_DEFAULTS = "/etc/default/ovirt"
 get_hostname = lambda: os.uname()[1]
 double_check = lambda i, attr:\
         hasattr(i, attr) and getattr(i, attr) is not None
@@ -67,22 +66,33 @@ def datas_refresh(oc_widgets):
                 else:
                     print 'Need a Setter for', i
 
+def augtool_set(key, val):
+    augtool('rm', key)
+    augtool('set', key, val)
+
+
+def conf_reset(rst_btn):
+    i = rst_btn
+    while hasattr(i, 'oc_widgets') == False:
+        i = i.get_parent()
+    datas_refresh(i.oc_widgets)
+
 
 def conf_apply(apy_btn):
-    print 'hello!'
     i = apy_btn
-    while (isinstance(i.get_parent(), gtk.Notebook) and
-            hasattr(i, 'oc_widgets')) == False:
+    while hasattr(i, 'oc_widgets') == False:
         i = i.get_parent()
     oc_widgets = i.oc_widgets
     for widget in oc_widgets.values():
-        if hasattr(widget, 'get_oc_value'):
-            print 'Apply value:', widget.get_oc_value()
+        if isinstance(widget, gtk.Entry):
+            v = widget.get_text()
+        else:
+            print 'Nothing to apply for:', widget
         if double_check(widget, 'set_conf'):
             if double_check(widget, 'conf_path'):
-                widget.set_conf(widget.get_oc_value, widget.conf_path)
+                widget.set_conf(widget.conf_path, v)
             else:
-                widget.set_conf(widget.get_oc_value)
+                widget.set_conf(v)
 
 
 def data_read(path):
@@ -179,22 +189,26 @@ def read_log_status():
         logging_status_text = "Local Only"
     return logging_status_text
 
-
-def read_nics():
+def filter_rn_get_list(allinfos):
     nics = []
-    nic_dict, configured_nics, ntp_dhcp = get_system_nics()
+    nic_dict = allinfos[0]
     for key in sorted(nic_dict.iterkeys()):
         (dev_interface, dev_bootproto, dev_vendor, dev_address,
         dev_driver, dev_conf_status, dev_bridge) = (
                 nic_dict[key].split(",", 6))
         dev_vendor = pad_or_trim(10, dev_vendor)
-        dev_interface = pad_or_trim(6, dev_interface)
         if len(dev_interface.strip()) == 0:
             continue
         else:
             nics.append([dev_interface, dev_conf_status,
                         dev_vendor, dev_address])
     return nics
+
+def read_nics(nic_filter):
+    result = get_system_nics()
+    # result is (nic_dict, configured_nics and ntp_dhcp)
+    result = nic_filter(result)
+    return result
 
 def refresh_window(obj):
     while hasattr(obj, 'oc_widgets') == False:
