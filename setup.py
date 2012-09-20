@@ -44,6 +44,7 @@ DATAS = find_data_files(paths=('doc',),
 DATAS_PO = find_data_files(paths=('po',), prefix='/tmp/')
 DATAS.extend(DATAS_PO)
 DATAS.append(('/usr/libexec/', ['./scripts/run-ocsetup']))
+DATAS.append(('/usr/libexec/', ['./scripts/ovirtocsetup']))
 DATAS.append(('/tmp/', ['./scripts/makemo.sh']))
 setup(
         name        = "OcSetup",
