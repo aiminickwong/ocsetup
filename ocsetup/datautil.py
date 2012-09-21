@@ -67,7 +67,7 @@ def datas_refresh(oc_widgets):
                     print 'Need a Setter for', i
 
 def augtool_set(key, val):
-    augtool('rm', key)
+    augtool('rm', key, "")
     augtool('set', key, val)
 
 
