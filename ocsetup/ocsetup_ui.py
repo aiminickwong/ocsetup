@@ -315,7 +315,7 @@ class OcSecurity(OcLayout):
                                                 _('Confirm Password:'))
         local_access_password_confirm_value = WidgetBase('local_access_password_confirm',
                                                         'Entry', '')
-        Changes_Security = WidgetBase('security_apply_reset', ApplyResetBtn, )
+        Changes_Security = WidgetBase('security_apply_reset', ApplyResetBtn)
         self.append([
                     (remote_access,),
                     (enable_ssh,),
@@ -336,15 +336,14 @@ class OcKDump(OcLayout):
 
     def get_layout(self):
         kernedump_label = WidgetBase('kernel_dump', 'Label', _('Kernel Dump'), title=True)
-        nfs_ssh_restore_check_button_list = WidgetBase('nfs_ssh_restor', ButtonList, '',
+        nfs_ssh_restore_check_button_list = WidgetBase('nfs_ssh_restor', RadioButtonList, '',
                 params={'labels':[_('NFS'), _('SSH'), _('RESTORE')],
                         'type': 'CheckButton'})
         nfs_location_label = WidgetBase('nfs_location', 'Label', _('NFS Location'))
         nfs_location_value = WidgetBase('nfs_location', 'Entry', '', '')
         ssh_location_label = WidgetBase('ssh_location', 'Label', _('SSH Location'))
         ssh_location_value = WidgetBase('ssh_location', 'Entry', '', '')
-        changes_kdump = WidgetBase('kdump', ButtonList, '',
-                params={'labels':[_('Apply'), _('Reset')], })
+        changes_kdump = WidgetBase('kdump', ApplyResetBtn)
         self.append([
                     (kernedump_label,),
                     (nfs_ssh_restore_check_button_list,),
