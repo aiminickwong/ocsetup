@@ -235,14 +235,14 @@ class NetworkDetail(OcLayout):
     def __init__(self, treeview_datas):
         super(NetworkDetail, self).__init__('network_detail', 'invisible_tab')
         ifname = treeview_datas[0]
-        dev_interface, dev_bootproto, dev_vendor, dev_address,\
+        self.dev_interface, dev_bootproto, dev_vendor, dev_address,\
         dev_driver, dev_conf_status, dev_bridge = datautil.read_nics(lambda allinfos: allinfos[0][ifname].split(','))
         if nic_link_detected(ifname):
             link_status = "Active"
         else:
             link_status = "Inactive"
         network_detail_if = WidgetBase('interface', 'Label', '',
-                get_conf = lambda : _("Interface: ") + dev_interface)
+                get_conf = lambda : _("Interface: ") + self.dev_interface)
         network_detail_driver = WidgetBase('driver', 'Label', '',
                 get_conf = lambda : _("Driver: ") + dev_driver)
         network_detail_proto = WidgetBase('protocol', 'Label', '',
@@ -266,8 +266,7 @@ class NetworkDetail(OcLayout):
         network_detail_ipv4_gateway_val = WidgetBase('ipv4_gateway', 'Entry',
                 set_conf=datautil.augtool_set, conf_path=NIC_GATEWAY_PATH)
         network_detail_vlan_id = WidgetBase('vlan_id', 'Label', _('Vlan Id'))
-        network_detail_vlan_id_val = WidgetBase('vlan_id', 'Entry',
-                set_conf=datautil.augtool_set, conf_path=NIC_VLAN_PATH)
+        network_detail_vlan_id_val = WidgetBase('vlan_id', 'Entry', '')
         network_detail_back = WidgetBase('ipv4_back', ButtonList, '',
                 params={'labels': ['Back'], 'callback': [self.network_detail_back]})
         network_change = WidgetBase('network_detail_apply_reset',
@@ -296,6 +295,7 @@ class NetworkDetail(OcLayout):
         # we need to do 2 steps to apply
         # a network configuration.
         # first write config to /etc/default/ovirt
+        datautil.augtool_set(NIC_BOOTIF_PATH, self.dev_interface)
         # then 'actually' apply the configuration.
         datautil.conf_apply(btn)
         network = Network()

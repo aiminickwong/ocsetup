@@ -117,9 +117,9 @@ def data_write(path, key):
 
 
 def read_status_datas():
+    status_text = []
     if network_up():
         network_status = {}
-        status_text = []
         client = gudev.Client(['net'])
         # reload augeas tree
         aug.load()
@@ -274,7 +274,6 @@ def validator_disp(widget, _, validator):
             apply_rest_btn.btns[0].set_sensitive(True)
         else:
             logger.debug( 'Error invalid_cnt value'+ invalid_cnt)
-
 
 
 def refresh_window(obj):
