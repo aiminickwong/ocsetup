@@ -29,6 +29,7 @@ from ovirtnode.network import get_system_nics
 from ovirtnode.log import get_rsyslog_config
 import gudev
 import gtk
+from ocsetup_ui_widgets import ValidateEntry, ApplyResetBtn
 
 #TEMP VARS
 OVIRT_VARS = {}
@@ -71,7 +72,7 @@ def datas_refresh(oc_widgets):
                 i.set_text(v or "")
                 i.get_oc_value = i.get_text
             else:
-                print 'Need a Setter for', i
+                logger.debug('Need a Setter for' + str(i))
 
 
 def augtool_set(key, val):
@@ -82,15 +83,24 @@ def augtool_set(key, val):
 def conf_reset(rst_btn):
     oc_widgets = get_oc_widgets(rst_btn)
     datas_refresh(oc_widgets)
-
+    for i in oc_widgets.values():
+        if hasattr(i, 'validate_status'):
+            i.validate_status.set_label("")
+            i.bool_validate_state = 0
+        if isinstance(i, ApplyResetBtn):
+            i.btns[0].set_sensitive(True)
 
 def conf_apply(apy_btn):
     oc_widgets = get_oc_widgets(apy_btn)
     for widget in oc_widgets.values():
-        if isinstance(widget, gtk.Entry):
-            v = widget.get_text()
+        # this could be a ValidateEntry, which has
+        # get_oc_value, or a normal gtk.Entry, which
+        # will automatically get a get_oc_value during
+        # the creation.
+        if hasattr(widget, 'get_oc_value'):
+            v = widget.get_oc_value()
         else:
-            print 'Nothing to apply for:', widget
+            logger.debug('Nothing to apply for:' + str(widget))
         if double_check(widget, 'set_conf'):
             if double_check(widget, 'conf_path'):
                 widget.set_conf(widget.conf_path, v)
@@ -212,6 +222,60 @@ def read_nics(nic_filter):
     # result is (nic_dict, configured_nics and ntp_dhcp)
     result = nic_filter(result)
     return result
+
+def pw_strength(val):
+    #always return true
+    #this is a strong password.
+    return True
+
+def is_pw_same(_):
+    try:
+        from ocsetup import ocs
+    except:
+        return False
+    page = ocs.page_security
+    pw1 = page.local_access_password_custom.entry.get_text()
+    pw2 = page.local_access_password_confirm_custom.entry.get_text()
+    if pw1 == pw2 and pw1 is not "":
+        return True
+    return False
+
+# works for ipv4 only.
+def validate_ip(val):
+    import socket
+    if(len(val.split('.')) != 4):
+        return False
+    try:
+        addr= socket.inet_aton(val)
+        return True
+    except socket.error:
+        return False
+
+def validator_disp(widget, _, validator):
+    v = widget.get_parent().get_oc_value()
+    if validator(v) == True:
+        widget.get_parent().validate_status.set_label('VALID')
+        widget.get_parent().bool_validate_state = 0
+    else:
+        widget.get_parent().validate_status.set_label('INVALID')
+        widget.get_parent().bool_validate_state = 1
+    oc_widgets = get_oc_widgets(widget.get_parent())
+    apply_rest_btn = None
+    invalid_cnt = 0
+    for w in oc_widgets.values():
+        if isinstance(w, ValidateEntry):
+            invalid_cnt += w.bool_validate_state
+        if isinstance(w, ApplyResetBtn):
+            apply_rest_btn = w
+    if apply_rest_btn:
+        if invalid_cnt > 0 and apply_rest_btn:
+            apply_rest_btn.btns[0].set_sensitive(False)
+        elif invalid_cnt == 0:
+            apply_rest_btn.btns[0].set_sensitive(True)
+        else:
+            logger.debug( 'Error invalid_cnt value'+ invalid_cnt)
+
+
 
 def refresh_window(obj):
     oc_widgets = get_oc_widgets(obj)

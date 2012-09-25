@@ -37,7 +37,7 @@ from ocsetup_ui_constants import OC_SELECTED_BTN_BG, OC_SELECTED_TAB_BG,\
                             OC_DETAILEDLIST_HEIGHT,\
                             OC_DETAILED_LIST_HEIGHT, GTK_SIGNAL_KEY_PRESS,\
                             GTK_SIGNAL_CHILD_EXIT, GTK_SIGNAL_CLICKED,\
-                            GTK_SIGNAL_CLICK_DETAILLIST,\
+                            GTK_SIGNAL_CLICK_DETAILLIST,GTK_SIGNAL_FOCUS_OUT,\
                             OC_WIDTH, OC_HEIGHT,\
                             OC_DEFAULT
 import datautil
@@ -199,6 +199,38 @@ class DetailedList(gtk.ScrolledWindow):
         for v in list_of_entry:
             self.treeview.treeview_datas.append(v)
             self._liststore.append(v)
+
+
+class ValidateEntry(gtk.VBox):
+
+    def __init__(self, datas):
+        super(ValidateEntry, self).__init__(False, 0)
+        validator = datas.get('validator')
+        entry_init_func = datas.get('entry_init_func', ())
+        entry_init_func_args = datas.get('entry_init_func_args', ()) + \
+                                ((),) * len(entry_init_func)
+        vstatus_init_func = datas.get('vstatus_init_func', ())
+        vstatus_init_func_args = datas.get('vstatus_init_func_args', ()) + \
+                                ((),) * len(vstatus_init_func)
+        self.entry = gtk.Entry()
+        self.set_text = self.entry.set_text
+        self.get_text = self.entry.get_text
+        self.get_oc_value = self.entry.get_text
+        self.entry.set_size_request(OC_DEFAULT, OC_TEXT_HEIGHT)
+        self.entry.connect(GTK_SIGNAL_FOCUS_OUT,
+                datautil.validator_disp, validator)
+        self.validate_status = gtk.Label()
+        self.validate_status.set_size_request(OC_DEFAULT, OC_TEXT_HEIGHT)
+        self.bool_validate_state = 0
+        self.pack_start(self.entry, False, False, 0)
+        self.pack_start(self.validate_status, False, False, 0)
+        if entry_init_func:
+            for func, args in zip(entry_init_func, entry_init_func_args):
+                getattr(self.entry, func)(*args)
+        if vstatus_init_func:
+            for func, args in zip(vstaus_init_func, vstatus_init_func_args):
+                getattr(self.validate_status, func)(*args)
+
 
 class ShellWindow(gtk.Window):
 

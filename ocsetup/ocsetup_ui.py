@@ -24,10 +24,12 @@
 import gtk
 import sys
 from ocsetup_ui_widgets import ButtonList, DetailedList,\
-                               ConfirmDialog, ApplyResetBtn, RadioButtonList
+                               ConfirmDialog, ApplyResetBtn, RadioButtonList,\
+                               ValidateEntry
 from ovirtnode.ovirtfunctions import system_closefds, augtool_get,\
                                 augtool, nic_link_detected
 from wrapper_ovirtfunctions import exec_extra_buttons_cmds
+from ocsetup_ui_constants import GTK_SIGNAL_CLICKED
 import gettext
 import datautil
 from ovirtnode.network import Network
@@ -163,21 +165,25 @@ class OcNetwork(OcLayout):
                 get_conf=datautil.get_hostname)
 
         DNS_SERVER1_label = WidgetBase('dns_server1', 'Label', _('DNS Server1:'))
-        DNS_SERVER1_value = WidgetBase('dns_server1', 'Entry',
+        DNS_SERVER1_value = WidgetBase('dns_server1', ValidateEntry,
                         get_conf=augtool_get, conf_path=DNS_SERVER1_PATH,
-                        set_conf=datautil.augtool_set)
+                        set_conf=datautil.augtool_set,
+                        params={'validator':datautil.validate_ip})
         DNS_SERVER2_label = WidgetBase('dns_server2', 'Label', _('DNS Server2:'))
-        DNS_SERVER2_value = WidgetBase('dns_server2', 'Entry',
+        DNS_SERVER2_value = WidgetBase('dns_server2', ValidateEntry,
                         get_conf=augtool_get, conf_path=DNS_SERVER2_PATH,
-                        set_conf=datautil.augtool_set)
+                        set_conf=datautil.augtool_set,
+                        params={'validator':datautil.validate_ip})
         NTP_SERVER1_label = WidgetBase('ntp_server1', 'Label', _('NTP Server1:'))
-        NTP_SERVER1_value = WidgetBase('ntp_server1', 'Entry',
+        NTP_SERVER1_value = WidgetBase('ntp_server1', ValidateEntry,
                         get_conf=augtool_get, conf_path=NTP_SERVER1_PATH,
-                        set_conf=datautil.augtool_set)
+                        set_conf=datautil.augtool_set,
+                        params={'validator':datautil.validate_ip})
         NTP_SERVER2_label = WidgetBase('ntp_server2', 'Label', _('NTP Server2:'))
-        NTP_SERVER2_value = WidgetBase('ntp_server2', 'Entry',
+        NTP_SERVER2_value = WidgetBase('ntp_server2', ValidateEntry,
                         get_conf=augtool_get, conf_path=NTP_SERVER2_PATH,
-                        set_conf=datautil.augtool_set)
+                        set_conf=datautil.augtool_set,
+                        params={'validator':datautil.validate_ip})
 
         # need to do some hack to import and run the codes
         # from ocsetup_ui_widgets.
@@ -215,10 +221,8 @@ class OcNetwork(OcLayout):
                     (Hostname_label,Hostname_value,),
                     (DNS_SERVER1_label, DNS_SERVER1_value),
                     (DNS_SERVER2_label, DNS_SERVER2_value),
-                    (EMPTY_LINE,),
                     (NTP_SERVER1_label, NTP_SERVER1_value),
                     (NTP_SERVER2_label, NTP_SERVER2_value),
-                    (EMPTY_LINE,),
                     (NETWORK_LIST,),
                     (changes_network,),
                     ])
@@ -310,11 +314,17 @@ class OcSecurity(OcLayout):
         local_access = WidgetBase('local_access', 'Label', _('Local Access'),
                 title=True)
         local_access_password = WidgetBase('local_access_password', 'Label', _('Password:'))
-        local_access_password_value = WidgetBase('local_access_password', 'Entry', '')
+        local_access_password_value = WidgetBase('local_access_password', ValidateEntry, '',
+                params={'validator': datautil.pw_strength,
+                    'entry_init_func':("set_visibility",), 'entry_init_func_args':((False,),)})
         local_access_password_confirm = WidgetBase('local_access_password', 'Label',
                                                 _('Confirm Password:'))
         local_access_password_confirm_value = WidgetBase('local_access_password_confirm',
-                                                        'Entry', '')
+                ValidateEntry, '',
+                params={'validator': datautil.is_pw_same,
+                'entry_init_func':("set_visibility",),
+                'entry_init_func_args':((False,),)},
+                set_conf=self.change_password)
         Changes_Security = WidgetBase('security_apply_reset', ApplyResetBtn)
         self.append([
                     (remote_access,),
@@ -323,10 +333,21 @@ class OcSecurity(OcLayout):
                     (local_access,),
                     (local_access_password, local_access_password_value,),
                     (local_access_password_confirm, local_access_password_confirm_value,),
-                    (WidgetBase('empty', 'Label', '', vhelp=180),),
+                    (WidgetBase('empty', 'Label', '', vhelp=140),),
                     (Changes_Security,),
                     ])
         return self
+
+    def change_password(self, _):
+        try:
+            from ocsetup import ocs
+            from ovirtnode.password import set_password
+            page = ocs.page_security
+            pw1 = page.local_access_password_custom.entry.get_text()
+            set_password(pw1, "admin")
+        except Exception, e:
+            pass
+
 
 
 class OcKDump(OcLayout):
