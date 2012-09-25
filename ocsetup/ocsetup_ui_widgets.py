@@ -425,6 +425,8 @@ class OcPage(gtk.VBox):
         itype = data['type']
         label = data.get('label')
         value = data.get('value')
+        init_func = data.get('init_func')
+        init_func_args = data.get('init_func_args')
         item = getattr(gtk, itype)()
         item.set_size_request(OC_DEFAULT, OC_TEXT_HEIGHT)
         if value and hasattr(item, 'set_text'):
@@ -438,4 +440,7 @@ class OcPage(gtk.VBox):
                 item.set_line_wrap(True)
                 item.set_size_request(OC_DEFAULT,
                                 OC_TEXT_HEIGHT*((len(label)//text_width)+1))
+        if init_func is not None:
+            for func, args in zip(init_func, init_func_args):
+                getattr(item, func)(*args)
         return item
