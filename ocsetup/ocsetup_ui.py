@@ -27,7 +27,7 @@ from ocsetup_ui_widgets import ButtonList, DetailedList,\
                                ConfirmDialog, ApplyResetBtn, RadioButtonList,\
                                ValidateEntry
 from ovirtnode.ovirtfunctions import system_closefds, augtool_get,\
-                                augtool, nic_link_detected
+                                augtool, nic_link_detected, log
 from wrapper_ovirtfunctions import exec_extra_buttons_cmds
 from ocsetup_ui_constants import GTK_SIGNAL_CLICKED
 import gettext
@@ -311,7 +311,9 @@ class OcSecurity(OcLayout):
     def get_layout(self):
         remote_access = WidgetBase('remote_access', 'Label', _('Remote Access'),
                 title=True)
-        enable_ssh = WidgetBase('enable_ssh', 'CheckButton', _('Enable SSH '))
+        enable_ssh = WidgetBase('enable_ssh', 'CheckButton',
+                '',
+                get_conf=self.get_ssh_conf, conf_path=ENABLE_SSH_PATH, set_conf=self.set_ssh_conf)
         local_access = WidgetBase('local_access', 'Label', _('Local Access'),
                 title=True)
         local_access_password = WidgetBase('local_access_password', 'Label', _('Password:'))
@@ -339,6 +341,41 @@ class OcSecurity(OcLayout):
                     ])
         return self
 
+    def get_ssh_conf(self, path):
+        try:
+            from ocsetup import ocs
+            state = augtool_get(path)
+            if state == "no":
+                ocs.page_security.enable_ssh_CheckButton.set_active(False)
+            elif state == "yes":
+                ocs.page_security.enable_ssh_CheckButton.set_active(True)
+            else:
+                log('ssh PasswordAuthentication invail val:' + state)
+        except Exception, e:
+            log(e)
+            pass
+        # because this widget (CheckButton) is kind special, it will return `two`
+        # value: one is the state of ssh enable/disable
+        # and the other one is the label, which is a static string.
+        # that is , 'Enable SSH PasswordAuthentication'
+        return _('Enable SSH PasswordAuthentication')
+
+    def set_ssh_conf(self, path, _):
+        try:
+            from ocsetup import ocs
+            check_button_state = ocs.page_security.enable_ssh_CheckButton.get_active()
+            current_state = augtool_get(path)
+            if check_button_state == False:
+                datautil.augtool_set(path, "no")
+            else:
+                datautil.augtool_set(path, "yes")
+            if (current_state == "no" and check_button_state == True) or \
+                (current_state != "no" and check_button_state == False):
+                    # SSHD CONFIGURE CHANGED, RESTART.
+                    system_closefds("service sshd restart &>/dev/null")
+        except Exception, e:
+            print e
+
     def change_password(self, _):
         try:
             from ocsetup import ocs
@@ -346,6 +383,7 @@ class OcSecurity(OcLayout):
             page = ocs.page_security
             pw1 = page.local_access_password_custom.entry.get_text()
             set_password(pw1, "admin")
+            log("change password for admin:" + pw1)
         except Exception, e:
             pass
 
