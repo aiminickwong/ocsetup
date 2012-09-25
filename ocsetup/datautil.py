@@ -38,6 +38,14 @@ get_hostname = lambda: os.uname()[1]
 double_check = lambda i, attr:\
         hasattr(i, attr) and getattr(i, attr) is not None
 
+def get_oc_widgets(widget):
+    w = widget
+    while hasattr(w, 'oc_widgets') == False:
+        try:
+            w = w.get_parent()
+        except:
+            return None
+    return w.oc_widgets
 
 def datas_refresh(oc_widgets):
     """
@@ -54,17 +62,17 @@ def datas_refresh(oc_widgets):
                 v = i.get_conf(*i.get_conf_args)
             else:
                 v = i.get_conf()
-            if v:
-                if double_check(i, 'show_conf'):
-                    i.show_conf(v)
-                elif hasattr(i, 'set_label'):
-                    i.set_label(v)
-                    i.get_oc_value = i.get_label
-                elif hasattr(i, 'set_text'):
-                    i.set_text(v)
-                    i.get_oc_value = i.get_text
-                else:
-                    print 'Need a Setter for', i
+            if double_check(i, 'show_conf'):
+                i.show_conf(v)
+            elif hasattr(i, 'set_label'):
+                i.set_label(v or "")
+                i.get_oc_value = i.get_label
+            elif hasattr(i, 'set_text'):
+                i.set_text(v or "")
+                i.get_oc_value = i.get_text
+            else:
+                print 'Need a Setter for', i
+
 
 def augtool_set(key, val):
     augtool('rm', key, "")
@@ -72,17 +80,12 @@ def augtool_set(key, val):
 
 
 def conf_reset(rst_btn):
-    i = rst_btn
-    while hasattr(i, 'oc_widgets') == False:
-        i = i.get_parent()
-    datas_refresh(i.oc_widgets)
+    oc_widgets = get_oc_widgets(rst_btn)
+    datas_refresh(oc_widgets)
 
 
 def conf_apply(apy_btn):
-    i = apy_btn
-    while hasattr(i, 'oc_widgets') == False:
-        i = i.get_parent()
-    oc_widgets = i.oc_widgets
+    oc_widgets = get_oc_widgets(apy_btn)
     for widget in oc_widgets.values():
         if isinstance(widget, gtk.Entry):
             v = widget.get_text()
@@ -211,6 +214,5 @@ def read_nics(nic_filter):
     return result
 
 def refresh_window(obj):
-    while hasattr(obj, 'oc_widgets') == False:
-        obj = obj.get_parent()
-    datas_refresh(obj.oc_widgets)
+    oc_widgets = get_oc_widgets(obj)
+    datas_refresh(oc_widgets)
