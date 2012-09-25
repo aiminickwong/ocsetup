@@ -265,7 +265,9 @@ class NetworkDetail(OcLayout):
                 set_conf=datautil.augtool_set, conf_path=NIC_VLAN_PATH)
         network_detail_back = WidgetBase('ipv4_back', ButtonList, '',
                 params={'labels': ['Back'], 'callback': [self.network_detail_back]})
-        network_change = WidgetBase('network_detail_apply_reset', ApplyResetBtn, params=(self.network_apply_cb))
+        network_change = WidgetBase('network_detail_apply_reset',
+                ApplyResetBtn,
+                params={'apply_cb':self.network_apply_cb})
         self.append([
                 (network_detail_if, network_detail_driver),
                 (network_detail_proto, network_detail_vendor),

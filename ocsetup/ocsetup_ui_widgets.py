@@ -162,15 +162,16 @@ class RadioButtonList(gtk.HButtonBox):
 
 class ApplyResetBtn(ButtonList):
 
-    def __init__(self, apply_cb=None, reset_cb=None):
-        apply_cb = apply_cb or datautil.conf_apply
-        reset_cb = reset_cb or datautil.conf_reset
+    def __init__(self, data={}):
+        apply_cb = data.get('apply_cb', None) or datautil.conf_apply
+        reset_cb = data.get('reset_cb', None) or datautil.conf_reset
         super(ApplyResetBtn, self).__init__({'labels':
                                             ['Apply', 'Reset'],
                                             'callback':
                                             [apply_cb,
                                              reset_cb]
                                             })
+
 
 class DetailedList(gtk.ScrolledWindow):
 
