@@ -273,7 +273,7 @@ def validator_disp(widget, _, validator):
         elif invalid_cnt == 0:
             apply_rest_btn.btns[0].set_sensitive(True)
         else:
-            logger.debug( 'Error invalid_cnt value'+ invalid_cnt)
+            logger.debug('Error invalid_cnt value :%d' % invalid_cnt)
 
 
 def refresh_window(obj):
