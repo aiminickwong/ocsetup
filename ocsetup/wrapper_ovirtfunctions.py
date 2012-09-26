@@ -38,11 +38,10 @@ def new_attr(obj, attr_name, attr_value):
 
 
 exec_extra_buttons_cmds = {
-        "restart":   "echo 'restart'",
-        "power_off": "echo 'power_off'",
-        "log_off":   "kill `pgrep -f ocsetup.ocsetup.run\(\)`",
-        "lock":      "echo 'lock'",
-        }
+    "restart": "echo 'restart'",
+    "power_off": "echo 'power_off'",
+    "log_off": "kill `pgrep -f ocsetup.ocsetup.run\(\)`",
+    "lock": "echo 'lock'"}
 
 
 class PluginBase(object):
@@ -55,7 +54,6 @@ class PluginBase(object):
     Because we only need to two parameters to init a plug in ocsetup,
     (origin version needs three), so we override this PluginBase.
     """
-
 
     def __init__(self, name):
         """Initialize a PluginBase instance
@@ -80,4 +78,3 @@ class PluginBase(object):
         Must be implemented by the child class.
         """
         pass
-
