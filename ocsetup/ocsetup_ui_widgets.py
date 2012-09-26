@@ -23,25 +23,25 @@
 import gtk
 import vte
 from ocsetup_ui_constants import OC_SELECTED_BTN_BG, OC_SELECTED_TAB_BG,\
-                            OC_LOG_PAGE_BG, OC_INIT_BTN_BG,\
-                            OC_BUTTON_LIST_HEIGHT, OC_COLOR_BUTTON_HEIGHT,\
-                            OC_LOG_WIN_WIDTH, OC_LOG_WIN_HEIGHT,\
-                            OC_ALIGNMENT_TITLE_X, OC_ALIGNMENT_TITLE_Y,\
-                            OC_ALIGNMENT_CONTENT_X, OC_ALIGNMENT_CONTENT_Y,\
-                            OC_PAGE_WIDGET_HPADDING,\
-                            OC_PADDING_CONTENT_FIRST,\
-                            OC_PADDING_CONTENT_NEXT,\
-                            OC_PADDING_TITLE,\
-                            OC_PADDING_LIST,\
-                            OC_TEXT_WIDTH, OC_TEXT_HEIGHT,\
-                            OC_DETAILEDLIST_HEIGHT,\
-                            OC_DETAILED_LIST_HEIGHT, GTK_SIGNAL_KEY_PRESS,\
-                            GTK_SIGNAL_CHILD_EXIT, GTK_SIGNAL_CLICKED,\
-                            GTK_SIGNAL_CLICK_DETAILLIST,GTK_SIGNAL_FOCUS_OUT,\
-                            OC_WIDTH, OC_HEIGHT,\
-                            OC_DEFAULT
+    OC_LOG_PAGE_BG, OC_INIT_BTN_BG,\
+    OC_BUTTON_LIST_HEIGHT, OC_COLOR_BUTTON_HEIGHT,\
+    OC_LOG_WIN_WIDTH, OC_LOG_WIN_HEIGHT,\
+    OC_ALIGNMENT_CONTENT_X, OC_ALIGNMENT_CONTENT_Y,\
+    OC_PAGE_WIDGET_HPADDING,\
+    OC_PADDING_CONTENT_FIRST,\
+    OC_PADDING_CONTENT_NEXT,\
+    OC_PADDING_TITLE,\
+    OC_PADDING_LIST,\
+    OC_TEXT_WIDTH, OC_TEXT_HEIGHT,\
+    OC_DETAILEDLIST_HEIGHT,\
+    OC_DETAILED_LIST_HEIGHT, GTK_SIGNAL_KEY_PRESS,\
+    GTK_SIGNAL_CHILD_EXIT, GTK_SIGNAL_CLICKED,\
+    GTK_SIGNAL_CLICK_DETAILLIST, GTK_SIGNAL_FOCUS_OUT,\
+    OC_WIDTH, OC_HEIGHT,\
+    OC_DEFAULT
 import datautil
 from wrapper_ovirtfunctions import new_attr
+
 
 class ColorWidget(gtk.EventBox):
 
@@ -55,8 +55,9 @@ class ColorWidget(gtk.EventBox):
         if self.init_color is not None:
             self.change_color('bg', gtk.STATE_NORMAL, self.init_color)
         for signal in signals_to_handle:
-            self.color_widget.connect(signal,
-                    getattr(self, signal.replace('-', '_').lower() + '_cb'))
+            self.color_widget.connect(
+                signal,
+                getattr(self, signal.replace('-', '_').lower() + '_cb'))
         if label:
             self.color_widget.set_label(label)
 
@@ -68,26 +69,32 @@ class ColorWidget(gtk.EventBox):
         else:
             getattr(self.color_widget, modifier)(state, _color)
 
+
 class EmptyArea(gtk.Label):
 
     def __init__(self, width, height):
         super(EmptyArea, self).__init__()
         self.set_size_request(width, height)
 
+
 class ColorLabel(ColorWidget):
 
     def __init__(self, label, color):
-        super(ColorLabel, self).__init__('Label', label=label, init_color=color)
+        super(ColorLabel, self).__init__(
+            'Label', label=label, init_color=color)
 
 
 class ColorButton(ColorWidget):
 
-    def __init__(self, label, init_btn_bg=OC_INIT_BTN_BG,
-                signals_to_handle=["focus-in-event", "focus-out-event",
-                                    "state-changed"]):
-        super(ColorButton, self).__init__('Button', label=label,
-                                         init_color=OC_INIT_BTN_BG,
-                                         signals_to_handle=signals_to_handle)
+    def __init__(
+            self, label, init_btn_bg=OC_INIT_BTN_BG,
+            signals_to_handle=[
+                "focus-in-event", "focus-out-event",
+                "state-changed"]):
+        super(ColorButton, self).__init__(
+            'Button', label=label,
+            init_color=OC_INIT_BTN_BG,
+            signals_to_handle=signals_to_handle)
 
     def focus_in_event_cb(self, widget, event):
         self.change_color('bg', gtk.STATE_NORMAL, OC_SELECTED_BTN_BG)
@@ -102,15 +109,18 @@ class ColorButton(ColorWidget):
 
 class ColorNotebookTab(ColorWidget):
 
-    def __init__(self, label, init_btn_bg=OC_SELECTED_TAB_BG,
-                signals_to_handle=[]):
-        super(ColorNotebookTab, self).__init__('Label', label=label,
-                                        init_color=OC_SELECTED_TAB_BG,
-                                        signals_to_handle=signals_to_handle)
+    def __init__(
+            self, label, init_btn_bg=OC_SELECTED_TAB_BG,
+            signals_to_handle=[]):
+        super(ColorNotebookTab, self).__init__(
+            'Label', label=label,
+            init_color=OC_SELECTED_TAB_BG,
+            signals_to_handle=signals_to_handle)
         self.show_all()
 
     def get_label(self):
         return self.color_widget.get_label()
+
 
 class ColorVBox(ColorWidget):
 
@@ -119,13 +129,14 @@ class ColorVBox(ColorWidget):
         self.set_border_width(0)
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(init_color))
 
+
 class ButtonList(gtk.HButtonBox):
 
     def __init__(self, data):
         super(ButtonList, self).__init__()
         labels = data['labels']
         btn_nr = len(labels)
-        callbacks = data.get('callback', [lambda _:_]*btn_nr)
+        callbacks = data.get('callback', [lambda _:_] * btn_nr)
         signal = data.get('signal', 'clicked')
         btn_type = data.get('type', 'Button')
         self.set_layout(gtk.BUTTONBOX_END)
@@ -137,6 +148,7 @@ class ButtonList(gtk.HButtonBox):
             self.pack_start(btn, False, False, padding=5)
         self.set_size_request(-1, OC_BUTTON_LIST_HEIGHT)
 
+
 class RadioButtonList(gtk.HButtonBox):
 
     def __init__(self, data):
@@ -144,7 +156,7 @@ class RadioButtonList(gtk.HButtonBox):
         labels = data['labels']
         btn_nr = len(labels)
         signal = data.get('signal', 'group-changed')
-        callbacks = data.get('callback', [lambda _:_]*btn_nr)
+        callbacks = data.get('callback', [lambda _:_] * btn_nr)
         btn_nr = len(labels)
         self.set_layout(gtk.BUTTONBOX_END)
         self.btns = []
@@ -159,7 +171,6 @@ class RadioButtonList(gtk.HButtonBox):
         self.set_size_request(-1, OC_BUTTON_LIST_HEIGHT)
 
 
-
 class ApplyResetBtn(ButtonList):
 
     def __init__(self, data={}):
@@ -169,8 +180,7 @@ class ApplyResetBtn(ButtonList):
                                             ['Apply', 'Reset'],
                                             'callback':
                                             [apply_cb,
-                                             reset_cb]
-                                            })
+                                             reset_cb]})
 
 
 class DetailedList(gtk.ScrolledWindow):
@@ -182,14 +192,15 @@ class DetailedList(gtk.ScrolledWindow):
         liststore = gtk.ListStore(*([str] * len(labels)))
         self.treeview = gtk.TreeView(liststore)
         if data.get('callback'):
-            self.treeview.connect(data.get('signal',
-                                    GTK_SIGNAL_CLICK_DETAILLIST),
-                                  data['callback'])
+            self.treeview.connect(data.get(
+                'signal',
+                GTK_SIGNAL_CLICK_DETAILLIST),
+                data['callback'])
         # store a copy of dats for callback to use.
         self.treeview.treeview_datas = []
         for idx, label in enumerate(labels):
-            self.treeview.insert_column_with_attributes(-1,
-                label, gtk.CellRendererText(), text=idx)
+            self.treeview.insert_column_with_attributes(
+                -1, label, gtk.CellRendererText(), text=idx)
         self.add(self.treeview)
         self._liststore = liststore
         self.treeview.set_size_request(-1, OC_DETAILED_LIST_HEIGHT)
@@ -208,17 +219,18 @@ class ValidateEntry(gtk.VBox):
         validator = datas.get('validator')
         entry_init_func = datas.get('entry_init_func', ())
         entry_init_func_args = datas.get('entry_init_func_args', ()) + \
-                                ((),) * len(entry_init_func)
+            ((),) * len(entry_init_func)
         vstatus_init_func = datas.get('vstatus_init_func', ())
         vstatus_init_func_args = datas.get('vstatus_init_func_args', ()) + \
-                                ((),) * len(vstatus_init_func)
+            ((),) * len(vstatus_init_func)
         self.entry = gtk.Entry()
         self.set_text = self.entry.set_text
         self.get_text = self.entry.get_text
         self.get_oc_value = self.entry.get_text
         self.entry.set_size_request(OC_DEFAULT, OC_TEXT_HEIGHT)
-        self.entry.connect(GTK_SIGNAL_FOCUS_OUT,
-                datautil.validator_disp, validator)
+        self.entry.connect(
+            GTK_SIGNAL_FOCUS_OUT,
+            datautil.validator_disp, validator)
         self.validate_status = gtk.Label()
         self.validate_status.set_size_request(OC_DEFAULT, OC_TEXT_HEIGHT)
         self.bool_validate_state = 0
@@ -228,7 +240,7 @@ class ValidateEntry(gtk.VBox):
             for func, args in zip(entry_init_func, entry_init_func_args):
                 getattr(self.entry, func)(*args)
         if vstatus_init_func:
-            for func, args in zip(vstaus_init_func, vstatus_init_func_args):
+            for func, args in zip(vstatus_init_func, vstatus_init_func_args):
                 getattr(self.validate_status, func)(*args)
 
 
@@ -271,9 +283,9 @@ class ShellWindow(gtk.Window):
         key = gtk.gdk.keyval_name(event.keyval)
         if key == 'F2':
             if self.is_shell_exited or self.is_shell_hide:
-                if self.confirm == False or\
-                ConfirmDialog(self.confirm_msg).run_and_close() ==\
-                gtk.RESPONSE_OK:
+                if(self.confirm is False or
+                    ConfirmDialog(self.confirm_msg).run_and_close() ==
+                        gtk.RESPONSE_OK):
                     self.shell_show()
             else:
                 self.hide()
@@ -287,8 +299,9 @@ class LogWindow(gtk.Window):
         self.logshell = ShellWindow(self)
         self.set_position(gtk.WIN_POS_CENTER)
         self.is_logwin_hide = True
-        self.files = ('/var/log/messages', '/var/log/vdsm/vdsm.log',
-                        '/var/log/ovirt.log')
+        self.files = (
+            '/var/log/messages', '/var/log/vdsm/vdsm.log',
+            '/var/log/ovirt.log')
         if parent:
             self.swparent = parent
             w, h = self.swparent.get_size()
@@ -307,8 +320,9 @@ class LogWindow(gtk.Window):
             h.pack_start(btn, True, False)
             v.pack_start(h, False, False)
         btn_back = ColorButton('Back')
-        btn_back.color_widget.connect(GTK_SIGNAL_CLICKED,
-                lambda _: self.hide())
+        btn_back.color_widget.connect(
+            GTK_SIGNAL_CLICKED,
+            lambda _: self.hide())
         alignb = gtk.Alignment()
         alignb.add(btn_back)
         alignb.set_size_request(OC_LOG_WIN_WIDTH, OC_LOG_WIN_HEIGHT)
@@ -347,13 +361,15 @@ class NetworkDetailWindows(gtk.Window):
         datautil.datas_refresh(page.oc_widgets)
         self.show_all()
 
+
 class ConfirmDialog(gtk.MessageDialog):
 
     def __init__(self, message=""):
-        super(ConfirmDialog, self).__init__(None,
-                        gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                        gtk.MESSAGE_WARNING, gtk.BUTTONS_OK_CANCEL,
-                        message)
+        super(ConfirmDialog, self).__init__(
+            None,
+            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            gtk.MESSAGE_WARNING, gtk.BUTTONS_OK_CANCEL,
+            message)
         self.set_position(gtk.WIN_POS_CENTER)
         self.set_title("Continue?")
 
@@ -418,8 +434,9 @@ class OcPage(gtk.VBox):
                     hbox.pack_start(alig, True, True)
                 else:
                     hbox.pack_start(alig, False, False)
-            self.pack_start(hbox, False, False,
-                                padding=OC_PAGE_WIDGET_HPADDING)
+            self.pack_start(
+                hbox, False, False,
+                padding=OC_PAGE_WIDGET_HPADDING)
 
     def _create_item(self, data):
         itype = data['type']
@@ -438,8 +455,9 @@ class OcPage(gtk.VBox):
             item.set_width_chars(text_width)
             if len(label) > OC_TEXT_WIDTH:
                 item.set_line_wrap(True)
-                item.set_size_request(OC_DEFAULT,
-                                OC_TEXT_HEIGHT*((len(label)//text_width)+1))
+                item.set_size_request(
+                    OC_DEFAULT,
+                    OC_TEXT_HEIGHT * ((len(label) // text_width) + 1))
         if init_func is not None:
             for func, args in zip(init_func, init_func_args):
                 getattr(item, func)(*args)
