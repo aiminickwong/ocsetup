@@ -27,13 +27,14 @@ import os
 import datautil
 from ocsetup_ui import layouts
 from ocsetup_ui_widgets import ShellWindow, LogWindow, ColorLabel, OcPage
-from ocsetup_ui_constants import OC_NOTEBOOK_TAB_WIDTH, OC_NOTEBOOK_TAB_HEIGHT,\
-                            OC_NOTEBOOK_WIDTH, OC_NOTEBOOK_HEIGHT,\
-                            OC_HEADER_HEIGHT, \
-                            OC_FOOTER_HEIGHT,\
-                            OC_WIDTH, OC_HEIGHT,\
-                            OC_HEADER_BG, OC_FOOTER_BG,\
-                            GTK_SIGNAL_DESTROY, GTK_SIGNAL_SWITCH_PAGE
+from ocsetup_ui_constants import OC_NOTEBOOK_TAB_WIDTH,\
+    OC_NOTEBOOK_TAB_HEIGHT,\
+    OC_NOTEBOOK_WIDTH, OC_NOTEBOOK_HEIGHT,\
+    OC_HEADER_HEIGHT, \
+    OC_FOOTER_HEIGHT,\
+    OC_WIDTH, OC_HEIGHT,\
+    OC_HEADER_BG, OC_FOOTER_BG,\
+    GTK_SIGNAL_DESTROY, GTK_SIGNAL_SWITCH_PAGE
 from distutils.sysconfig import get_python_lib
 from wrapper_ovirtfunctions import new_attr
 OVIRT_PLUGINS_PATH = get_python_lib() + '/ocsetup/plugins/'
@@ -53,8 +54,9 @@ class OcSetup(object):
         self.notebook.connect(GTK_SIGNAL_SWITCH_PAGE, self._handle_switch_page)
         self.notebook.set_size_request(OC_NOTEBOOK_WIDTH, OC_NOTEBOOK_HEIGHT)
         self.notebook.set_show_border(False)
-        self.shell = ShellWindow(self.window, confirm=True,
-                        confirm_msg="Are you sure to use shell?")
+        self.shell = ShellWindow(
+            self.window, confirm=True,
+            confirm_msg="Are you sure to use shell?")
         self.logger = LogWindow(self.window)
         self.pages = {}
         # Get Plugins from path `OVIRT_PLUGINS_PATH`
