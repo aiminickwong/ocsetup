@@ -100,10 +100,17 @@ class OcStatus(OcLayout):
             [_('Logical Network'), _('Device'), _('MAC Address')]},
             get_conf=datautil.read_logical_netwrok)
         status_log_label = WidgetBase(
-            'status_log', 'Label', _('Log'), title=True)
+                'status_log', 'Label', _('Log: '), title=True)
         status_log_value = WidgetBase(
             'status_log_val', 'Label',
             get_conf=datautil.read_log_status)
+
+        running_vms_label = WidgetBase(
+            'running_vms_label', 'Label', _('Running VMs: '), title=True)
+        running_vms_value = WidgetBase(
+            'running_vms_value', 'Label',
+            get_conf=datautil.get_running_vms)
+
         status_buttons = WidgetBase(
             'status_buttons', ButtonList, '',
             params={'labels':
@@ -117,8 +124,8 @@ class OcStatus(OcLayout):
                     (logical_network,),
                     (EMPTY_LINE,),
                     (EMPTY_LINE,),
-                    (status_log_label,),
-                    (status_log_value,),
+                    (status_log_label, status_log_value,),
+                    (running_vms_label, running_vms_value,),
                     (status_buttons,),
                     ])
         return self

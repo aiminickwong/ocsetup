@@ -32,6 +32,7 @@ from ovirtnode.ovirtfunctions import \
 from ovirtnode.network import get_system_nics
 from ovirtnode.log import get_rsyslog_config
 import gudev
+import libvirt
 from ocsetup_ui_widgets import ValidateEntry, ApplyResetBtn
 
 #TEMP VARS
@@ -192,6 +193,17 @@ def read_logical_netwrok():
         device = pad_or_trim(8, device)
         net_entry.append([key, device, mac])
     return net_entry
+
+
+def get_running_vms():
+    dom_count = None
+    try:
+        conn = libvirt.openReadOnly(None)
+        dom_count = conn.numOfDomains()
+        conn.close()
+    except:
+        dom_count = "Failed to connect"
+    return str(dom_count)
 
 
 def read_log_status():
