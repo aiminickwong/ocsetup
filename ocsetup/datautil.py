@@ -21,14 +21,17 @@
 #
 
 import os
-from ovirtnode.ovirtfunctions import  network_up, aug, logical_to_physical_networks,\
-                            augtool, augtool_get, logger,\
-                            has_ip_address, get_ipv6_address, get_ip_address,\
-                            nic_link_detected, pad_or_trim
+from ovirtnode.ovirtfunctions import \
+    network_up, aug,\
+    logical_to_physical_networks,\
+    augtool, augtool_get, logger,\
+    has_ip_address,\
+    get_ipv6_address,\
+    get_ip_address,\
+    nic_link_detected, pad_or_trim
 from ovirtnode.network import get_system_nics
 from ovirtnode.log import get_rsyslog_config
 import gudev
-import gtk
 from ocsetup_ui_widgets import ValidateEntry, ApplyResetBtn
 
 #TEMP VARS
@@ -37,16 +40,18 @@ OVIRT_VARS = {}
 
 get_hostname = lambda: os.uname()[1]
 double_check = lambda i, attr:\
-        hasattr(i, attr) and getattr(i, attr) is not None
+    hasattr(i, attr) and getattr(i, attr) is not None
+
 
 def get_oc_widgets(widget):
     w = widget
-    while hasattr(w, 'oc_widgets') == False:
+    while hasattr(w, 'oc_widgets') is False:
         try:
             w = w.get_parent()
         except:
             return None
     return w.oc_widgets
+
 
 def datas_refresh(oc_widgets):
     """
@@ -90,6 +95,7 @@ def conf_reset(rst_btn):
         if isinstance(i, ApplyResetBtn):
             i.btns[0].set_sensitive(True)
 
+
 def conf_apply(apy_btn):
     oc_widgets = get_oc_widgets(apy_btn)
     for widget in oc_widgets.values():
@@ -128,14 +134,16 @@ def read_status_datas():
                 interface = nic.get_property("INTERFACE")
                 logger.debug(interface)
                 if not interface == "lo":
-                    if has_ip_address(interface) or\
-                    get_ipv6_address(interface):
+                    if(has_ip_address(interface) or
+                            get_ipv6_address(interface)):
                         ipv4_address = get_ip_address(interface)
                         try:
                             ipv6_address, netmask = get_ipv6_address(interface)
                         except:
                             ipv6_address = ""
-                        network_status[interface] = (ipv4_address, ipv6_address)
+                        network_status[interface] = (
+                            ipv4_address,
+                            ipv6_address)
             except:
                 pass
         # remove parent/bridge duplicates
@@ -147,11 +155,11 @@ def read_status_datas():
         for key in sorted(network_status.iterkeys()):
             ipv4_addr, ipv6_addr = network_status[key]
             cmd = "/files/etc/sysconfig/network-scripts/" +\
-            "ifcfg-%s/BOOTPROTO" % str(key)
+                "ifcfg-%s/BOOTPROTO" % str(key)
             dev_bootproto = augtool_get(cmd)
             if dev_bootproto is None:
                 cmd = "/files/etc/sysconfig/network-scripts/" +\
-                "ifcfg-br%s/BOOTPROTO" % str(key)
+                    "ifcfg-br%s/BOOTPROTO" % str(key)
                 dev_bootproto = augtool_get(cmd)
                 if dev_bootproto is None:
                     dev_bootproto = "Disabled"
@@ -196,18 +204,21 @@ def read_log_status():
     netconsole_server_port = augtool_get("/files/etc/sysconfig/" +
                                          "netconsole/SYSLOGPORT")
     if netconsole_server and netconsole_server_port:
-        logging_status_text += "Netconsole: %s:%s" % (netconsole_server,
-                                            netconsole_server_port)
+        logging_status_text += "Netconsole: %s:%s" % (
+            netconsole_server,
+            netconsole_server_port)
     if len(logging_status_text) == 0:
         logging_status_text = "Local Only"
     return logging_status_text
+
 
 def filter_rn_get_list(allinfos):
     nics = []
     nic_dict = allinfos[0]
     for key in sorted(nic_dict.iterkeys()):
-        (dev_interface, dev_bootproto, dev_vendor, dev_address,
-        dev_driver, dev_conf_status, dev_bridge) = (
+        (
+            dev_interface, dev_bootproto, dev_vendor, dev_address,
+            dev_driver, dev_conf_status, dev_bridge) = (
                 nic_dict[key].split(",", 6))
         dev_vendor = pad_or_trim(10, dev_vendor)
         if len(dev_interface.strip()) == 0:
@@ -217,16 +228,19 @@ def filter_rn_get_list(allinfos):
                         dev_vendor, dev_address])
     return nics
 
+
 def read_nics(nic_filter):
     result = get_system_nics()
     # result is (nic_dict, configured_nics and ntp_dhcp)
     result = nic_filter(result)
     return result
 
+
 def pw_strength(val):
     #always return true
     #this is a strong password.
     return True
+
 
 def is_pw_same(_):
     try:
@@ -240,20 +254,22 @@ def is_pw_same(_):
         return True
     return False
 
+
 # works for ipv4 only.
 def validate_ip(val):
     import socket
     if(len(val.split('.')) != 4):
         return False
     try:
-        addr= socket.inet_aton(val)
+        socket.inet_aton(val)
         return True
     except socket.error:
         return False
 
+
 def validator_disp(widget, _, validator):
     v = widget.get_parent().get_oc_value()
-    if validator(v) == True:
+    if validator(v) is True:
         widget.get_parent().validate_status.set_label('VALID')
         widget.get_parent().bool_validate_state = 0
     else:
