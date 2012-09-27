@@ -155,7 +155,7 @@ class RadioButtonList(gtk.HButtonBox):
         super(RadioButtonList, self).__init__()
         labels = data['labels']
         btn_nr = len(labels)
-        signal = data.get('signal', 'group-changed')
+        signal = data.get('signal', GTK_SIGNAL_CHECKED)
         callbacks = data.get('callback', [lambda _:_] * btn_nr)
         btn_nr = len(labels)
         self.set_layout(gtk.BUTTONBOX_END)
