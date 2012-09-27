@@ -26,11 +26,12 @@ from ovirtnode.ovirtfunctions import log
 
 sys.path.append("/usr/share/vdsm-reg")
 from ovirtnode.license_utils import hasRegistered, getVersionInfo,\
-                          getLicenseConfig, hasStarted,\
-                          setLicenseConfig, computeDeprecatedDays,\
-                          DEFAULTREMAININGDAYS
+    getLicenseConfig, hasStarted,\
+    setLicenseConfig, computeDeprecatedDays,\
+    DEFAULTREMAININGDAYS
 from ocsetup.wrapper_ovirtfunctions import PluginBase
 from ocsetup.ocsetup_ui import WidgetBase, EMPTY_LINE
+
 
 class Plugin(PluginBase):
     """
@@ -47,28 +48,42 @@ class Plugin(PluginBase):
             hasregister = hasRegistered()
             hasstart = hasStarted()
 
-            headermessage = WidgetBase("Basic_Information", "Label", "Basic Information",
-                    title=True)
+            headermessage = WidgetBase(
+                "Basic_Information",
+                "Label",
+                "Basic Information",
+                title=True)
 
             #show hypervisor version information
             version = getVersionInfo()
-            versionlabel =  WidgetBase("Version", "Label",
-                    "Version:" + version)
+            versionlabel = WidgetBase(
+                "Version", "Label",
+                "Version:" + version)
 
             #show register information
-            subtopiclabel = WidgetBase("SUB_TOPIC_LABEL", "Label",
-                    "Basic Register Information: ", title=True)
+            subtopiclabel = WidgetBase(
+                "SUB_TOPIC_LABEL", "Label",
+                "Basic Register Information: ", title=True)
 
-            maclabel = WidgetBase("MAC_LABEL", "Label", "",
-                    get_conf=lambda : "MAC :  " +
-                    getLicenseConfig("vars", "mac", "F0:DE:F1:00:00:00"))
+            maclabel = WidgetBase(
+                "MAC_LABEL", "Label", "",
+                get_conf=lambda: "MAC :  " + getLicenseConfig(
+                    "vars",
+                    "mac",
+                    "F0:DE:F1:00:00:00"))
 
-            sysuuidlabel = WidgetBase("SYSTEMUUID_LABEL", "Label", "",
-                    get_conf=lambda : "UUID :  " +
-                    getLicenseConfig("vars", "systemuuid", "00000000-0000-0000-0000-000000000000"))
+            sysuuidlabel = WidgetBase(
+                "SYSTEMUUID_LABEL", "Label", "",
+                get_conf=lambda: "UUID :  " + getLicenseConfig(
+                    "vars",
+                    "systemuuid",
+                    "00000000-0000-0000-0000-000000000000"))
 
             if hasstart and hasregister:
-                taillabel_text = "Your hypervisor has been registered successfully.Any question, please contact : service@cloud-times.com!"
+                taillabel_text = "Your hypervisor has been registered"
+                taillabel_text.append(" successfully.Any question, ")
+                taillabel_text.append("please contact : ")
+                taillabel_text.append("service@cloud-times.com!")
             else:
                 days, issuccess = computeDeprecatedDays()
                 if issuccess:
@@ -78,29 +93,38 @@ class Plugin(PluginBase):
                         remaindays = 0
                 else:
                     log("Failed to invoke computeDeprecatedDays. ")
-                warninginfo = "You have " + str(remaindays) + " to use before registering."
-                taillabel_text = "Your hypervisor hasn't been registered.Please use the information above to register."+warninginfo
+                warninginfo = "You have "
+                warninginfo.append(str(remaindays))
+                warninginfo.append(" to use before registering.")
+                taillabel_text = "Your hypervisor hasn't been registered."
+                taillabel_text.append("Please use the information")
+                taillabel_text.append(" above to register.")
+                taillabel_text.append(warninginfo)
             note = WidgetBase("note", "Label", "Note:", title=True)
-            taillabel = WidgetBase("TAIL_LABEL", "Label", taillabel_text, width=80)
+            taillabel = WidgetBase(
+                "TAIL_LABEL", "Label",
+                taillabel_text, width=80)
         except:
-            log("Here some error happened.format ext:  %s " % traceback.format_exc())
+            log("Here some error happened.format ext:  %s "
+                % traceback.format_exc())
 
-        return [ "License", "License",
-                    [
-                        (headermessage,),
-                        (versionlabel,),
-                        (subtopiclabel,),
-                        (maclabel,),
-                        (sysuuidlabel,),
-                        (note,),
-                        (taillabel,),
-                        (EMPTY_LINE,),
-                    ]
-              ]
-
+        return [
+            "License",
+            "License",
+            [
+                (headermessage,),
+                (versionlabel,),
+                (subtopiclabel,),
+                (maclabel,),
+                (sysuuidlabel,),
+                (note,),
+                (taillabel,),
+                (EMPTY_LINE,),
+            ]]
 
     def action(self):
         pass
+
 
 def get_plugin():
     p = Plugin()
