@@ -34,6 +34,7 @@ from ovirtnode.log import get_rsyslog_config
 import gudev
 import libvirt
 from ocsetup_ui_widgets import ValidateEntry, ApplyResetBtn
+import re
 
 #TEMP VARS
 OVIRT_VARS = {}
@@ -277,6 +278,16 @@ def validate_ip(val):
         return True
     except socket.error:
         return False
+
+
+# check if a string is a valid int after convert to int.
+def validate_int(val):
+    try:
+        if re.match(r'\d+', val).group() == val:
+            return True
+    except:
+        pass
+    return False
 
 
 def validator_disp(widget, _, validator):
