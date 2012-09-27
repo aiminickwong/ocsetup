@@ -290,6 +290,13 @@ def validate_int(val):
     return False
 
 
+# check if a string is a valid port number(0~65535]
+def validate_port(val):
+    if validate_int(val) is True:
+        return int(val) > 0 and int(val) < 65536
+    return False
+
+
 def validator_disp(widget, _, validator):
     v = widget.get_parent().get_oc_value()
     if validator(v) is True:
