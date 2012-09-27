@@ -28,6 +28,7 @@ from ocsetup_ui_widgets import ButtonList, DetailedList,\
     ValidateEntry
 from ovirtnode.ovirtfunctions import system_closefds, augtool_get,\
     nic_link_detected, log
+from ovirtnode.log import get_rsyslog_config, ovirt_rsyslog, set_logrotate_size
 from wrapper_ovirtfunctions import exec_extra_buttons_cmds
 import gettext
 import datautil
@@ -142,19 +143,35 @@ class OcLogging(OcLayout):
         log_max_size_label = WidgetBase(
             'log_max_size_label', 'Label',
             _('Logrotate Max Log Size (KB):'))
+        #because log_max_size_value has conf_path,
+        #so set_conf will actually take two params(conf_path and value),
+        #but, in fact, we only need one(value), conf_path is useless here.
+        #so, using lambda to absorb conf_path, and only pass value to real
+        #set_conf callback.
         log_max_size_value = WidgetBase(
-            'log_max_size_value', 'Entry', '', '1024')
+            'log_max_size_value', ValidateEntry,
+            get_conf=lambda v: datautil.augtool_get(v) or '1024',
+            set_conf=lambda _, v: set_logrotate_size(v),
+            conf_path=LOG_LOGRORATE_SIZE_PATH,
+            params={'validator': datautil.validate_int})
         log_rsys = WidgetBase(
             'rsys', 'Label',
             _('Rsyslog is an enhanced multi-threaded syslog'), title=True)
         log_server_address = WidgetBase(
             'log_server_address', 'Label', _('Server Address:'))
         log_server_address_val = WidgetBase(
-            'log_server_address_value', 'Entry', '')
+            'log_server_address', ValidateEntry,
+            get_conf=lambda: get_rsyslog_config()[0] if
+            get_rsyslog_config() else "",
+            params={'validator': datautil.validate_ip})
         log_server_server_port = WidgetBase(
-            'log_server_server_port', 'Label', _('Server Port:'))
+            'log_server_port', 'Label', _('Server Port:'))
         log_server_server_port_val = WidgetBase(
-            'log_server_server_port', 'Entry', '', '514')
+            'log_server_port', ValidateEntry,
+            get_conf=lambda: get_rsyslog_config()[1] if
+            get_rsyslog_config() else "514",
+            params={'validator': datautil.validate_port},
+            set_conf=self.set_log_server)
         changes_log = WidgetBase('log_apply_reset', ApplyResetBtn)
         self.append([
                     (logging,),
@@ -162,11 +179,20 @@ class OcLogging(OcLayout):
                     (log_rsys,),
                     (log_server_address, log_server_address_val),
                     (log_server_server_port, log_server_server_port_val,),
-                    (WidgetBase('empty', 'Label', '', vhelp=200),),
-                    (changes_log,),
-                    ]
-                    )
+                    (WidgetBase('empty', 'Label', '', vhelp=140),),
+                    (changes_log,)])
         return self
+
+    def set_log_server(self, _):
+        try:
+            from ocsetup import ocs
+            page = ocs.page_logging
+            cur_server = page.log_server_address_custom.entry.get_text()
+            cur_port = page.log_server_port_custom.entry.get_text()
+            ovirt_rsyslog(cur_server, cur_port, "udp")
+        except Exception, e:
+            log(e)
+            pass
 
 
 class OcNetwork(OcLayout):
