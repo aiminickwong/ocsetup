@@ -19,12 +19,14 @@
 import traceback
 
 from ovirtnode.ovirtfunctions import log
-from ovirtnode.iscsi import get_current_iscsi_initiator_name, set_iscsi_initiator
+from ovirtnode.iscsi import get_current_iscsi_initiator_name, \
+    set_iscsi_initiator
 
 from ocsetup.wrapper_ovirtfunctions import PluginBase
 from ocsetup.ocsetup_ui_widgets import ButtonList
 from ocsetup.ocsetup_ui import WidgetBase, _
 from ocsetup.datautil import refresh_window
+
 
 class Plugin(PluginBase):
     """
@@ -32,14 +34,15 @@ class Plugin(PluginBase):
     """
     def __init__(self):
         PluginBase.__init__(self, "Storage")
-        self.iscsi_initiator_name_label = None
+        self.iscsi_initiator_label = None
         self.iscsi_initiator_name_value = None
         self.iscsi_button = None
 
     def storage_apply(self, obj):
         from ocsetup.ocsetup import ocs
         log("enter storage apply")
-        set_iscsi_initiator(ocs.page_Storage.iscsi_initiator_name_value_Entry.get_text())
+        set_iscsi_initiator(
+            ocs.page_Storage.iscsi_initiator_name_value_Entry.get_text())
 
     def storage_reset(self, obj):
         log("enter storage reset")
@@ -48,29 +51,36 @@ class Plugin(PluginBase):
     def form(self):
         log("enter storage form function....")
         try:
-            self.iscsi_initiator_name_label = WidgetBase("iscsi_initiator_name_label", "Label", "iSCSI Initiator Name:",
-                    title=True)
+            self.iscsi_initiator_label = WidgetBase(
+                "iscsi_initiator_label",
+                "Label",
+                "iSCSI Initiator Name:",
+                title=True)
 
-            self.iscsi_initiator_name_value = WidgetBase("iscsi_initiator_name_value", "Entry", "", "",
-                    get_conf=get_current_iscsi_initiator_name)
+            self.iscsi_initiator_name_value = WidgetBase(
+                "iscsi_initiator_name_value", "Entry", "", "",
+                get_conf=get_current_iscsi_initiator_name)
 
-            self.iscsi_button = WidgetBase('iscsi_button', ButtonList, '',
-                            params={'labels':[_('Apply'), _('Reset')],
-                                'callback': [self.storage_apply, self.storage_reset]})
+            self.iscsi_button = WidgetBase(
+                'iscsi_button', ButtonList, '',
+                params={'labels': [_('Apply'), _('Reset')],
+                'callback': [self.storage_apply, self.storage_reset]})
         except:
-            log("Here some error happened.format ext:  %s " % traceback.format_exc())
+            log("Here some error happened.format ext:  %s " %
+                traceback.format_exc())
 
-        return [ "Storage", "Storage",
-                    [
-                        (self.iscsi_initiator_name_label, self.iscsi_initiator_name_value),
-                        (WidgetBase('__', 'Label', vhelp=140),),
-                        (self.iscsi_button,),
-                    ]
-              ]
-
+        return [
+            "Storage",
+            "Storage",
+            [
+                (self.iscsi_initiator_label, self.iscsi_initiator_name_value),
+                (WidgetBase('__', 'Label', vhelp=140),),
+                (self.iscsi_button,),
+            ]]
 
     def action(self):
         pass
+
 
 def get_plugin():
     p = Plugin()
