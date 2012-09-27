@@ -24,14 +24,21 @@ import os
 import sys
 import traceback
 
-from ovirtnode.ovirtfunctions import ovirt_store_config, is_valid_host_or_ip, \
-                                     is_valid_port, PluginBase, log, network_up, \
-                                     password_check, augtool, is_console, system
+from ovirtnode.ovirtfunctions import ovirt_store_config, \
+                                     is_valid_host_or_ip, \
+                                     is_valid_port, \
+                                     PluginBase, \
+                                     log, \
+                                     network_up, \
+                                     password_check, \
+                                     augtool, \
+                                     is_console, \
+                                     system
 from ovirtnode.password import set_password
 from ovirtnode.license_utils import hasRegistered, hasStarted, hasDeprecated
 
 from ocsetup.ocsetup_ui import WidgetBase, EMPTY_LINE, _
-from ocsetup.ocsetup_ui_widgets import ButtonList
+from ocsetup.ocsetup_ui_widgets import ButtonList, ConfirmDialog
 from ocsetup.wrapper_ovirtfunctions import PluginBase
 
 import subprocess
@@ -190,9 +197,9 @@ class Plugin(PluginBase):
 
     def imvp_apply(self, obj):
         from ocsetup.ocsetup import ocs
-        log("enter imvp apply %s")
-        imvp_server_address = ocs.imvp_server_addr_val_Entry.get_text()
-        imvp_server_port = ocs.imvp_serve_port_val_Entry.get_text()
+        log("enter imvp apply")
+        imvp_server_address = ocs.page_imvp.imvp_server_addr_val_Entry.get_text()
+        imvp_server_port = ocs.page_imvp.imvp_serve_port_val_Entry.get_text()
         compatPort, sslPort = compatiblePort(imvp_server_port)
         if len(imvp_server_address) > 0:
             deployUtil.nodeCleanup()
@@ -202,30 +209,30 @@ class Plugin(PluginBase):
                     # Try one more time with SSL=False
                     if not isHostReachable(host=imvp_server_address,
                             port=imvp_server_port, ssl=False, timeout=TIMEOUT_FIND_HOST_SEC):
-                        msgConn = "Can't connect to oVirt Engine in the specific" \
-                        " port %s" % enginePort
+                        msgConn = "Can't connect to IMVP in the specific" \
+                        " port %s" % imvp_server_port
 
                         resp_id = ConfirmDialog(message=msgConn).run_and_close()
                         return False
                 else:
-                    msgConn = "Can't connect to oVirt Engine port %s," \
+                    msgConn = "Can't connect to IMVP port %s," \
                         " trying compatible port %s" % \
-                        (enginePort, compatPort)
+                        (imvp_server_port, compatPort)
 
                     resp_id = ConfirmDialog(message=msgConn).run_and_close()
 
                     if not isHostReachable(host=imvp_server_address,
                             port=compatPort, ssl=sslPort, timeout=TIMEOUT_FIND_HOST_SEC):
-                        msgConn = "Can't connect to oVirt Engine using" \
+                        msgConn = "Can't connect to IMVP using" \
                             " compatible port %s" % compatPort
                         resp_id = ConfirmDialog(message=msgConn).run_and_close()
                         return False
                     else:
                         # compatible port found
-                        enginePort = compatPort
+                        imvp_server_port = compatPort
 
             if True:
-                if deployUtil.getRhevmCert(imvp_server_address, enginePort):
+                if deployUtil.getRhevmCert(imvp_server_address, imvp_server_port, False):
                     path, dontCare = deployUtil.certPaths('')
                     fp = deployUtil.generateFingerPrint(path)
                     ovirt_store_config(path)
@@ -234,14 +241,14 @@ class Plugin(PluginBase):
                     resp_id = ConfirmDialog(message=msgConn).run_and_close()
             # Stopping vdsm-reg may fail but its ok - its in the case when the menus are run after installation
             deployUtil._logExec([constants.EXT_SERVICE, 'vdsm-reg', 'stop'])
-            if write_vdsm_config(imvp_server_address, enginePort):
+            if write_vdsm_config(imvp_server_address, imvp_server_port):
                 deployUtil._logExec([constants.EXT_SERVICE, 'vdsm-reg',
                     'start'])
-                msgConn = "@ENGINENAME@ Configuration Successfully Updated"
+                msgConn = "IMVP Configuration Successfully Updated"
                 resp_id = ConfirmDialog(message=msgConn).run_and_close()
                 retWriteConf = True
             else:
-                msgConn = "@ENGINENAME@ Configuration Failed"
+                msgConn = "IMVP Configuration Failed"
                 resp_id = ConfirmDialog(message=msgConn).run_and_close()
                 retWriteConf = False
 
