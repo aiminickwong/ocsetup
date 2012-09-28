@@ -364,11 +364,11 @@ class NetworkDetailWindows(gtk.Window):
 
 class ConfirmDialog(gtk.MessageDialog):
 
-    def __init__(self, message=""):
+    def __init__(self, message="", buttons=gtk.BUTTONS_OK_CANCEL):
         super(ConfirmDialog, self).__init__(
             None,
             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-            gtk.MESSAGE_WARNING, gtk.BUTTONS_OK_CANCEL,
+            gtk.MESSAGE_WARNING, buttons,
             message)
         self.set_position(gtk.WIN_POS_CENTER)
         self.set_title("Continue?")
