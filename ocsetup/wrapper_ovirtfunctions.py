@@ -22,9 +22,15 @@
 
 
 from subprocess import Popen, PIPE
+import shlex
 
 
-def check_output(*args):
+def check_output(command):
+    """
+    execute the command(with/without parameters)
+    and return the output
+    """
+    args = shlex.split(command)
     return Popen(args, stdout=PIPE).communicate()[0]
 
 
