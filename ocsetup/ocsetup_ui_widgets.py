@@ -37,6 +37,7 @@ from ocsetup_ui_constants import OC_SELECTED_BTN_BG, OC_SELECTED_TAB_BG,\
     OC_DETAILED_LIST_HEIGHT, GTK_SIGNAL_KEY_PRESS,\
     GTK_SIGNAL_CHILD_EXIT, GTK_SIGNAL_CLICKED,\
     GTK_SIGNAL_CLICK_DETAILLIST, GTK_SIGNAL_FOCUS_OUT,\
+    GTK_SIGNAL_CHECKED, GTK_SIGNAL_ENTRY_ENTER,\
     OC_WIDTH, OC_HEIGHT,\
     OC_DEFAULT
 import datautil
@@ -231,6 +232,10 @@ class ValidateEntry(gtk.VBox):
         self.entry.connect(
             GTK_SIGNAL_FOCUS_OUT,
             datautil.validator_disp, validator)
+        # the second params for validator_disp is useless.
+        self.entry.connect(
+            GTK_SIGNAL_ENTRY_ENTER,
+            datautil.validator_disp, None, validator)
         self.validate_status = gtk.Label()
         self.validate_status.set_size_request(OC_DEFAULT, OC_TEXT_HEIGHT)
         self.bool_validate_state = 0
