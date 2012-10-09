@@ -369,12 +369,11 @@ class NetworkDetailWindows(gtk.Window):
 
 class ConfirmDialog(gtk.MessageDialog):
 
-    def __init__(self, message="", buttons=gtk.BUTTONS_OK_CANCEL):
+    def __init__(self, parent=None, message="", buttons=gtk.BUTTONS_OK_CANCEL):
         super(ConfirmDialog, self).__init__(
-            None,
-            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-            gtk.MESSAGE_WARNING, buttons,
-            message)
+            flags=gtk.DIALOG_MODAL,
+            type=gtk.MESSAGE_WARNING, buttons=buttons,
+            message_format=message)
         self.set_position(gtk.WIN_POS_CENTER)
         self.set_title("Continue?")
 
@@ -382,6 +381,36 @@ class ConfirmDialog(gtk.MessageDialog):
         resp_id = self.run()
         self.destroy()
         return resp_id
+
+
+class ProgressBar(gtk.Window):
+    def __init__(self):
+        super(ProgressBar, self).__init__(gtk.WINDOW_TOPLEVEL)
+        vbox = gtk.VBox(False, 5)
+        self.progressbar = gtk.ProgressBar()
+        vbox.pack_start(self.progressbar)
+        self.progress_label = gtk.Label('Progress:')
+        self.btn_destroy = gtk.Button("OK")
+        self.btn_destroy.connect(GTK_SIGNAL_CLICKED, lambda _: self.destroy())
+        vbox.pack_start(self.progress_label)
+        vbox.pack_start(self.btn_destroy)
+        self.fraction = 0
+        self.set_position(gtk.WIN_POS_CENTER_ALWAYS)
+        self.add(vbox)
+        self.show_all()
+        while gtk.events_pending():
+            gtk.main_iteration()
+
+    def make_progress(self, fraction, text=None):
+        self.progressbar.set_text(
+            "Progressed: %s" %
+            (str(fraction * 100) + '%' if text is None else text))
+        self.progressbar.set_fraction(fraction)
+        while gtk.events_pending():
+            gtk.main_iteration()
+
+    def set_text(self, text):
+        self.progressbar.set_text(text)
 
 
 class OcPage(gtk.VBox):
