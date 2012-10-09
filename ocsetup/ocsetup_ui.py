@@ -22,17 +22,23 @@
 
 
 import gtk
+import gobject
 import sys
+import os
+import time
 from ocsetup_ui_widgets import ButtonList, DetailedList,\
     ConfirmDialog, ApplyResetBtn, RadioButtonList,\
-    ValidateEntry
+    ValidateEntry, ProgressBar
+from ocsetup_ui_constants import OC_MAX_ENTRY_LEN
 from ovirtnode.ovirtfunctions import system_closefds, augtool_get,\
-    nic_link_detected, log
+    nic_link_detected, log, is_valid_user_host, is_valid_nfs,\
+    ovirt_store_config, unmount_config, system
 from ovirtnode.log import get_rsyslog_config, ovirt_rsyslog, set_logrotate_size
-from wrapper_ovirtfunctions import exec_extra_buttons_cmds
+from wrapper_ovirtfunctions import exec_extra_buttons_cmds, check_output
 import gettext
 import datautil
 from ovirtnode.network import Network
+from ovirtnode.kdump import write_kdump_config, restore_kdump_config
 from ocsetup_conf_paths import *
 sys.path.append('..')
 gettext.bindtextdomain('ocsetup', '/usr/share/locale/')
@@ -480,28 +486,149 @@ class OcKDump(OcLayout):
         kernedump_label = WidgetBase(
             'kernel_dump', 'Label', _('Kernel Dump'), title=True)
         nfs_ssh_restore_check_button_list = WidgetBase(
-            'nfs_ssh_restor', RadioButtonList, '',
+            'nfs_ssh_restore', RadioButtonList, '',
             params={
                 'labels': [_('NFS'), _('SSH'), _('RESTORE')],
-                'type': 'CheckButton'})
+                'callback': [
+                    self.disable_entry_cb,
+                    self.disable_entry_cb,
+                    self.disable_entry_cb]},
+            get_conf=self.get_kdump_conf)
         nfs_location_label = WidgetBase(
             'nfs_location', 'Label',
             _('NFS Location'))
-        nfs_location_value = WidgetBase('nfs_location', 'Entry', '', '')
+        nfs_location_value = WidgetBase(
+            'nfs_location', ValidateEntry,
+            params={'validator': is_valid_nfs,
+            'entry_init_func': ('set_width_chars',),
+            'entry_init_func_args': ((OC_MAX_ENTRY_LEN,),)},
+            set_conf=write_kdump_config)
         ssh_location_label = WidgetBase(
             'ssh_location', 'Label',
             _('SSH Location'))
-        ssh_location_value = WidgetBase('ssh_location', 'Entry', '', '')
-        changes_kdump = WidgetBase('kdump', ApplyResetBtn)
+        ssh_location_value = WidgetBase(
+            'ssh_location', ValidateEntry,
+            params={'validator': lambda _: True,
+                    'entry_init_func': ('set_sensitive', 'set_width_chars'),
+                    'entry_init_func_args': ((False,), (OC_MAX_ENTRY_LEN,))},)
+        changes_kdump = WidgetBase(
+            'kdump', ApplyResetBtn,
+            params={'apply_cb': self.kdump_apply})
         self.append([
                     (kernedump_label,),
                     (nfs_ssh_restore_check_button_list,),
-                    (nfs_location_label, nfs_location_value,),
-                    (ssh_location_label, ssh_location_value,),
-                    (WidgetBase('empty', 'Label', '', vhelp=220),),
+                    (nfs_location_label,),
+                    (nfs_location_value,),
+                    (ssh_location_label,),
+                    (ssh_location_value,),
+                    (WidgetBase('empty', 'Label', '', vhelp=100),),
                     (changes_kdump,),
                     ])
         return self
+
+    def disable_entry_cb(self, btn):
+        if btn.get_active() is False:
+            return
+        try:
+            from ocsetup import ocs
+            page = ocs.page_kernel_dump
+            btns = ocs.page_kernel_dump.nfs_ssh_restore_custom.btns
+            page.ssh_location_custom.entry.set_sensitive(False)
+            page.nfs_location_custom.entry.set_sensitive(False)
+            if btn == btns[0]:
+                page.nfs_location_custom.entry.set_sensitive(True)
+                page.ssh_location_custom.validate_status.set_label("")
+                page.ssh_location_custom.bool_validate_state = 0
+            if btn == btns[1]:
+                page.ssh_location_custom.entry.set_sensitive(True)
+                page.nfs_location_custom.validate_status.set_label("")
+                page.nfs_location_custom.bool_validate_state = 0
+        except e:
+            pass
+
+    def kdump_apply(self, obj):
+        try:
+            from ocsetup import ocs
+        except ImportError:
+            pass
+        else:
+            page = ocs.page_kernel_dump
+            buttons = page.nfs_ssh_restore_custom.btns
+            val = None
+            for i in range(3):
+                # i == 0 is NFS, i == 1 is SSH, i == 2 is RESTORE
+                if buttons[i].get_active() and i == 0:
+                    val = page.nfs_location_custom.entry.get_text()
+                elif buttons[i].get_active() and i == 1:
+                    val = page.ssh_location_custom.entry.get_text()
+                elif buttons[i].get_active() and i == 2:
+                    restore_kdump_config()
+            if val:
+                write_kdump_config(val)
+                pb = ProgressBar()
+                pb.make_progress(0.1)
+                if '@' in val:
+                    if os.path.exists("/usr/bin/kdumpctl"):
+                        kdump_prop_cmd = "kdumpctl propagate"
+                    else:
+                        kdump_prop_cmd = "service kdump propagate"
+                    from sshcmd import runcmd
+                    runcmd(kdump_prop_cmd)
+                    pb.make_progress(0.2)
+                    if runcmd:
+                        # SSH LOGIN SUCCESS.
+                        ovirt_store_config("/root/.ssh/kdump_id_rsa.pub")
+                        ovirt_store_config("/root/.ssh/kdump_id_rsa")
+                        ovirt_store_config("/root/.ssh/known_hosts")
+                        ovirt_store_config("/root/.ssh/config")
+                pb.make_progress(0.5)
+                system('servic kdump restart &')
+                while True:
+                    res = check_output('service kdump status')
+                    if 'starting' not in res:
+                        break
+                    pb.make_progress(0.5)
+                    time.sleep(3)
+                pb.make_progress(0.8)
+                if 'Kdump is not operational' in res:
+                    # restart kdump Failed.
+                    unmount_config("/etc/kdump.conf")
+                    if os.path.exists("/etc/kdump.conf"):
+                        os.remove("/etc/kdump.conf")
+                    pb.make_progress(0, 'FAILED!')
+                    pb.progress_label.set_label('FAILED!')
+                elif 'Kdump is operational' in res:
+                    ovirt_store_config("/etc/kdump.conf")
+                    pb.make_progress(1, 'successful!')
+                else:
+                    log('kdump start Failed:' + res)
+                    pb.make_progress(0, 'FAILED!')
+                    pb.progress_label.set_label('FAILED!')
+
+    def get_kdump_conf(self):
+        try:
+            from ocsetup import ocs
+        except:
+            return
+        with open("/etc/kdump.conf") as kdump_config_file:
+            btns = ocs.page_kernel_dump.nfs_ssh_restore_custom.btns
+            config_nfs = ocs.page_kernel_dump.nfs_location_custom
+            config_ssh = ocs.page_kernel_dump.ssh_location_custom
+            config_nfs.entry.set_sensitive(False)
+            config_ssh.entry.set_sensitive(False)
+            for line in kdump_config_file:
+                if not line.startswith("#"):
+                    if line.startswith("net"):
+                        if "@" in line:
+                            btns[1].set_active(True)
+                            config_ssh.entry.set_text(line[4:].strip())
+                            config_ssh.entry.set_sensitive(True)
+                        elif ':' in line:
+                            btns[0].set_active(True)
+                            config_nfs.entry.set_text(line[4:].strip())
+                            config_nfs.entry.set_sensitive(True)
+                    elif "/dev/HostVG/Data" in line:
+                        btns[2].set_active()
 
 layouts =\
     [
@@ -509,4 +636,5 @@ layouts =\
         OcNetwork().get_layout(),
         OcSecurity().get_layout(),
         OcLogging().get_layout(),
-        OcKDump().get_layout()]
+        OcKDump().get_layout()
+    ]
