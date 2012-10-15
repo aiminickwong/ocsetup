@@ -214,10 +214,10 @@ class Plugin(PluginBase):
     def imvp_apply(self, obj):
         from ocsetup.ocsetup import ocs
         log("enter imvp apply")
-        imvp_server_address =
-        ocs.page_imvp.imvp_server_addr_val_Entry.get_text()
-        imvp_server_port =
-        ocs.page_imvp.imvp_serve_port_val_Entry.get_text()
+        imvp_server_address = \
+            ocs.page_imvp.imvp_server_addr_val_Entry.get_text()
+        imvp_server_port = \
+            ocs.page_imvp.imvp_serve_port_val_Entry.get_text()
         compatPort, sslPort = compatiblePort(imvp_server_port)
         if len(imvp_server_address) > 0:
             deployUtil.nodeCleanup()
@@ -235,14 +235,14 @@ class Plugin(PluginBase):
                             port=imvp_server_port,
                             ssl=False,
                             timeout=TIMEOUT_FIND_HOST_SEC)):
-                        msgConn = "Can't connect to IMVP in the specific" \
+                        msgConn = "Can't connect to IMVP in the specific" + \
                             " port %s" % imvp_server_port
 
-                        resp_id =
-                        ConfirmDialog(message=msgConn).run_and_close()
+                        resp_id = \
+                            ConfirmDialog(message=msgConn).run_and_close()
                         return False
                 else:
-                    msgConn = "Can't connect to IMVP port %s," \
+                    msgConn = "Can't connect to IMVP port %s," + \
                         " trying compatible port %s" % \
                         (imvp_server_port, compatPort)
 
@@ -253,10 +253,10 @@ class Plugin(PluginBase):
                             host=imvp_server_address,
                             port=compatPort, ssl=sslPort,
                             timeout=TIMEOUT_FIND_HOST_SEC)):
-                        msgConn = "Can't connect to IMVP using" \
+                        msgConn = "Can't connect to IMVP using" + \
                             " compatible port %s" % compatPort
-                        resp_id =
-                        ConfirmDialog(message=msgConn).run_and_close()
+                        resp_id = \
+                            ConfirmDialog(message=msgConn).run_and_close()
                         return False
                     else:
                         # compatible port found
