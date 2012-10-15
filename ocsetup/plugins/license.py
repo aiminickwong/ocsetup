@@ -94,12 +94,12 @@ class Plugin(PluginBase):
                 else:
                     log("Failed to invoke computeDeprecatedDays. ")
                 warninginfo = "You have "
-                warninginfo.append(str(remaindays))
-                warninginfo.append(" to use before registering.")
+                warninginfo = warninginfo + str(remaindays)
+                warninginfo = warninginfo + " to use before registering."
                 taillabel_text = "Your hypervisor hasn't been registered."
-                taillabel_text.append("Please use the information")
-                taillabel_text.append(" above to register.")
-                taillabel_text.append(warninginfo)
+                taillabel_text = taillabel_text + "Please use the information"
+                taillabel_text = taillabel_text + " above to register."
+                taillabel_text = taillabel_text + warninginfo
             note = WidgetBase("note", "Label", "Note:", title=True)
             taillabel = WidgetBase(
                 "TAIL_LABEL", "Label",
